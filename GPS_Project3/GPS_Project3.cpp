@@ -7,6 +7,8 @@
 #include <fstream>
 #include <data_src/OSMData.h>
 #include <queue>
+// _CRT_SECURE_NO_WARNINGS
+
 
 using namespace std;
 using namespace bridges;
