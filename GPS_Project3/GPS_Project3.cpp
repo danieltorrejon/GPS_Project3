@@ -7,8 +7,6 @@
 #include <fstream>
 #include <data_src/OSMData.h>
 #include <queue>
-// _CRT_SECURE_NO_WARNINGS
-
 
 using namespace std;
 using namespace bridges;
@@ -97,8 +95,9 @@ void styleRoot(GraphAdjList<int, OSMVertex, double>& graph,
 
 int main(int argc, char** argv) {
 
+
     //create the Bridges object, set credentials
-    Bridges bridges(109, "BRIDGES_USER_ID", "BRIDGES_API_KEY");
+    Bridges bridges(0, "DanielT", "1353295928782");
     bridges.setTitle("Graph : OpenStreet Map Example");
 
     //Getting Data
@@ -108,17 +107,41 @@ int main(int argc, char** argv) {
 
     //TODO: Get data
     DataSource ds(&bridges);
-    //OSMData osm_data = ds.getOSMData("Charlotte, North Carolina", "primary");
-    //OSMData osm_data = ds.getOSMData("Charlotte, North Carolina", "secondary");
-
-    OSMData osm_data = ds.getOSMData(35.28, -80.8, 35.34, -80.7, "tertiary"); //UNCC Campus
-
+    OSMData osm_data = ds.getOSMData("Charlotte, North Carolina");
+    //OSMData osm_data = ds.getOSMData(35.28, -80.8, 35.34, -80.7, "tertiary"); //UNCC Campus
     //OSMData osm_data = ds.getOSMData(39.85, -83.14, 40.12, -82.85, "secondary"); //Columbus, OH
     //OSMData osm_data = ds.getOSMData(39.121, -77.055, 39.208, -76.805); //Baltimore, MD
+
+    vector<OSMVertex> vertices = osm_data.getVertices();
+    vector<OSMEdge> edges = osm_data.getEdges();
+
+
     GraphAdjList<int, OSMVertex, double> graph;
     osm_data.getGraph(&graph);
     graph.forceLargeVisualization(true);
 
+    double xrange[2];
+    double yrange[2];
+    osm_data.getCartesianCoordsRange(xrange, yrange);
+
+    cout << xrange[0] << " " << xrange[1] << endl;
+    cout << yrange[0] << " " << yrange[1] << endl;
+
+    OSMVertex myVertex = vertices[11];
+    OSMVertex::OSMVertexID id = myVertex.getVertexID();
+    
+    
+    // Experimentation, WTF is this adjacencyList structure??
+
+    SLelement<Edge<int, double>>* neighbors = graph.getAdjacencyList(0);    // The neighbors of a key (0)
+    Edge<int, double> key = neighbors->getValue();
+    double edgeData = key.getEdgeData();
+
+    graph.getAdjacencyList(0)->setColor("");
+    cout << "Edge weight I think: " << edgeData << endl;
+
+   
+    
 
     //TODO Uncomment for part 2
     // //Getting source vertex (Using center of the map)
