@@ -80,9 +80,8 @@ void shortestPath(const GraphAdjList<int, OSMVertex, double>& gr,
 {   
     // A heap of pairs, where the pair stores <Distance, Index> as <int, int>
     
-
     priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>> > pq;    // min heap
-    vector<int> d(N, INT_MAX);
+    //vector<int> d(N, INT_MAX);
 
 }
 
@@ -194,15 +193,14 @@ int main(int argc, char** argv) {
     OSMVertex myVertex = vertices[11];
     OSMVertex::OSMVertexID id = myVertex.getVertexID();
     
-    // Experimentation, WTF is this adjacencyList structure??
     cout << endl;
-    cout << "======= STUFF IM DOING =======" << endl << endl;
+    cout << "======= STUFF Daniel is playing around with =======" << endl << endl;
 
-    int num = 342;
     
     // This is how you iterate through adjacent elements
     // Just a singular path of the many that can be taken
     // sort of
+    int num = 342;
     for (int i = 0; i < 0; i++)
     {
         SLelement<Edge<int, double>>* neighbors = graph.getAdjacencyList(num);
@@ -214,7 +212,6 @@ int main(int argc, char** argv) {
     }
 
     int index = getCenter(osm_data);
-    
     graph.getVertex(index)->setColor("red");
 
 
