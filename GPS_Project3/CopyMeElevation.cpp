@@ -5,6 +5,10 @@
 
 #include <vector>
 
+// CHANGED
+#undef max
+#undef min
+
 namespace bridges {
 
 	namespace dataset {
@@ -55,12 +59,10 @@ namespace bridges {
 				xll = yll = 0.;
 				cellSize = 0;
 
-				// CHANGED
-				//maxVal = std::numeric_limits<int>::min();
-				//minVal = std::numeric_limits<int>::max();
+				
+				maxVal = std::numeric_limits<int>::min();
+				minVal = std::numeric_limits<int>::max();
 
-				maxVal = INT_MIN;
-				minVal = INT_MAX;
 			}
 
 			/**
@@ -79,12 +81,8 @@ namespace bridges {
 				xll = yll = 0.;
 				cellSize = 0;
 
-				// CHANGED
-				//maxVal = std::numeric_limits<int>::min();
-				//minVal = std::numeric_limits<int>::max();
-
-				maxVal = INT_MIN;
-				minVal = INT_MAX;
+				maxVal = std::numeric_limits<int>::min();
+				minVal = std::numeric_limits<int>::max();
 			}
 			/**
 			 *
@@ -153,12 +151,9 @@ namespace bridges {
 			 */
 			void setVal(int r, int c, int val) {
 
-				// CHANGED
-				// minVal = std::min(minVal, val);
-				// maxVal = std::max(maxVal, val);
+				minVal = std::min(minVal, val);
+				maxVal = std::max(maxVal, val);
 
-				if (val < minVal) { minVal = val; }
-				if (val > maxVal) { maxVal = val; }
 
 				data[r * cols + c] = val;
 			}
