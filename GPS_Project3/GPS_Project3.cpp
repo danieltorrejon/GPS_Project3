@@ -36,21 +36,54 @@ void getQuarter(const OSMData& osm_data, double& lat, double& lon) {
 }
 
 //used to get the coordinate of the center of the map, Part 2
-void getCenter(const OSMData& osm_data, double& lat, double& lon) {
+int getCenter(const OSMData& osm_data) {
     double latr[2];
     double lonr[2];
     osm_data.getLatLongRange(latr, lonr);
 
-    lat = (latr[0] + latr[1]) / 2.;
-    lon = (lonr[0] + lonr[1]) / 2.;
+    double lat = (latr[0] + latr[1]) / 2.;
+    double lon = (lonr[0] + lonr[1]) / 2.;
+    vector<OSMVertex> vertices = osm_data.getVertices();
+
+    double latV = 0;
+    double lonV = 0;
+    bool found = false;
+    int index = -1;
+    double min = INT_MAX;
+
+    for (int i = 0; i < vertices.size(); i++)
+    {
+        latV = vertices[i].getLatitude();
+        lonV = vertices[i].getLongitude();
+        double dif = abs(lat - latV) + abs(lon - lonV);
+
+        if (min > dif)
+        {
+            min = dif;
+            index = i;
+        }
+
+    }
+
+    return index;
+    
+    
+
+
 }
 
 //actual shortestPath implementation, Part 3
 void shortestPath(const GraphAdjList<int, OSMVertex, double>& gr,
     int source,
-    std::unordered_map<int, double>& distance,
-    std::unordered_map<int, int>& parent) {
-    //TODO
+    unordered_map<int, double>& distance,
+    unordered_map<int, int>& parent)
+{   
+    // A heap of pairs, where the pair stores <Distance, Index> as <int, int>
+    
+
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>> > pq;    // min heap
+    vector<int> d(N, INT_MAX);
+
 }
 
 //return the vertex the closest to a particular (lat,lon), Part 3
@@ -96,7 +129,7 @@ void styleRoot(GraphAdjList<int, OSMVertex, double>& graph, int root) {
 
 bool inputParsing(istringstream& input)
 {
-
+    return true;
 }
 void outputAPI()
 {
@@ -161,15 +194,29 @@ int main(int argc, char** argv) {
     OSMVertex myVertex = vertices[11];
     OSMVertex::OSMVertexID id = myVertex.getVertexID();
     
-
     // Experimentation, WTF is this adjacencyList structure??
+    cout << endl;
+    cout << "======= STUFF IM DOING =======" << endl << endl;
 
-    SLelement<Edge<int, double>>* neighbors = graph.getAdjacencyList(0);    // The neighbors of a key (0)
-    Edge<int, double> key = neighbors->getValue();
-    double edgeData = key.getEdgeData();
+    int num = 342;
+    
+    // This is how you iterate through adjacent elements
+    // Just a singular path of the many that can be taken
+    // sort of
+    for (int i = 0; i < 0; i++)
+    {
+        SLelement<Edge<int, double>>* neighbors = graph.getAdjacencyList(num);
+        Edge<int, double> edge = neighbors->getValue();
 
-    graph.getAdjacencyList(0)->setColor("");
-    cout << "Edge weight I think: " << edgeData << endl;
+        graph.getVertex(num)->setColor("red");
+        num = edge.to();
+        cout << "Vertex: " << num << endl;
+    }
+
+    int index = getCenter(osm_data);
+    
+    graph.getVertex(index)->setColor("red");
+
 
    
 // Part 2: STREETMAP BUILDING
@@ -183,17 +230,17 @@ int main(int argc, char** argv) {
     // getQuarter(osm_data, latc, lonc);
     // dest = getClosestVertex(graph, latc, lonc);
     // styleRoot(graph, closest);
-    // bridges.setDataStructure(&graph);
-    // bridges.visualize();
+    bridges.setDataStructure(&graph);
+    bridges.visualize();
 
 //Part 3: ALGORITHM
         // Computing distance from a source to all vertices: Shortest Path Algorithm, Djikstra
         // Identifying path between source and destination :Graph Algorithms, Pointer Chasing
     //TODO Uncomment for part 3.
   
-    // std::unordered_map<int, double> distance;
-    // std::unordered_map<int, int> parent;
-    // shortestPath(graph, closest, distance, parent);
+    unordered_map<int, double> distance;
+    unordered_map<int, int> parent;
+    shortestPath(graph, closest, distance, parent);
     // //Styling based on distance
     // styleDistance(graph, distance);
     // bridges.visualize();
