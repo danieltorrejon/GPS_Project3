@@ -194,9 +194,6 @@ int main(int argc, char** argv) {
     // Get data from an API into the program
     // Build a graph for your city using the edge data you just obtained (or use Bridges builtin graph build OSMData.getGraph)
     // Render that map using Bridges
-    int closestCenterIdx;
-    double latc, lonc;
-    int dest;
 
     /* Get Data for an Area
         There are two ways for a user to request data:
@@ -224,6 +221,7 @@ int main(int argc, char** argv) {
     //OSMData osm_data = ds.getOSMData(39.85, -83.14, 40.12, -82.85, "secondary"); //Columbus, OH
     //OSMData osm_data = ds.getOSMData(39.121, -77.055, 39.208, -76.805); //Baltimore, MD
 
+
     vector<OSMVertex> vertices = osm_data.getVertices();
     vector<OSMEdge> edges = osm_data.getEdges();
 
@@ -250,6 +248,10 @@ int main(int argc, char** argv) {
         // Find the closest vertex to the center of your map to be used as the source vertex. 
         // You can get coordinates using OSMVertex.getLatitude() and OSMVertex.getLongitude(). You can color that vertex in the map to see if the calculation is correct.
     //TODO Uncomment for part 2
+
+    int closestCenterIdx;
+    int dest;
+
     closestCenterIdx = getCenter(osm_data);
     graph.getVertex(closestCenterIdx)->setColor("red");
     // getCenter(osm_data, latc, lonc);
