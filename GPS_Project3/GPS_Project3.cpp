@@ -43,21 +43,102 @@ void getQuarter(const OSMData& osm_data, double& lat, double& lon) {
 }
 
 //used to get the coordinate of the center of the map, Part 2
-void getCenter(const OSMData& osm_data, double& lat, double& lon) {
+int getCenter(const OSMData& osm_data) {
     double latr[2];
     double lonr[2];
     osm_data.getLatLongRange(latr, lonr);
 
-    lat = (latr[0] + latr[1]) / 2.;
-    lon = (lonr[0] + lonr[1]) / 2.;
+    double lat = (latr[0] + latr[1]) / 2.;
+    double lon = (lonr[0] + lonr[1]) / 2.;
+    vector<OSMVertex> vertices = osm_data.getVertices();
+
+    double latV = 0;
+    double lonV = 0;
+    bool found = false;
+    int index = -1;
+    double min = INT_MAX;
+
+    for (int i = 0; i < vertices.size(); i++)
+    {
+        latV = vertices[i].getLatitude();
+        lonV = vertices[i].getLongitude();
+        double dif = abs(lat - latV) + abs(lon - lonV);
+
+        if (min > dif)
+        {
+            min = dif;
+            index = i;
+        }
+
+    }
+
+    return index;
+    
+    
+
+
 }
 
-//actual shortestPath implementation, Part 3
-void shortestPath(const GraphAdjList<int, OSMVertex, double>& gr,
+// ======== DIJKSTRA'S SHORTEST PATH IMPLEMENTATION, Part 3 =========
+vector<int> shortestPath(const GraphAdjList<int, OSMVertex, double>& gr,
     int source,
-    std::unordered_map<int, double>& distance,
-    std::unordered_map<int, int>& parent) {
-    //TODO
+    unordered_map<int, int>& parent)
+{   
+    // 1) Parent unordered_map contains <vertexIdx, vertexIdx of parent>
+    // 2) not sure if im gonna use distances, we'll see. Use vector
+
+    // A heap of pairs, where the pair stores <Distance, Index> as <int, int>
+    int N = gr.getVertices()->size();
+
+    priority_queue<pair<double, int>, vector<pair<double, int>>, greater<pair<double, int>> > pq;    // min heap
+    vector<int> d(N, INT_MAX);
+
+    // -- INITIALIZATION -- 
+    int index = source;
+    parent.insert(source, -1);
+    d[index] = 0;
+    pq.push(make_pair(0, 0));
+
+    while (!pq.empty())
+    {
+        pq.pop();
+
+        // -- FIND NEIGHBORS --
+        const SLelement<Edge<int, double>>* neighborPtr = gr.getAdjacencyList(index);
+
+        while (neighborPtr != nullptr)
+        {
+
+            Edge<int, double> edge = neighborPtr->getValue();
+            int n = edge.to();
+            double weight = edge.getEdgeData();
+
+            if (d[n] > d[index] + weight)
+            {
+                d[n] = d[index] + weight;
+
+                if (parent.find(n) == parent.end())
+                {
+                    pq.push(make_pair(d[n], n));
+                    parent.insert(n, index);
+                }
+
+            }
+           
+            neighborPtr = neighborPtr->getNext();
+        }
+
+
+        bool alreadyVisited = parent.find(pq.top().second) != parent.end();
+        while (alreadyVisited && !pq.empty())
+        {
+            pq.pop();
+            alreadyVisited = parent.find(pq.top().second) != parent.end();
+
+        }
+    }
+
+    return d;
 }
 
 //return the vertex the closest to a particular (lat,lon), Part 3
@@ -344,44 +425,39 @@ int main(int argc, char** argv) {
         cout << "X-Range:\n" << "x-min: [" << xrange[0] << "] " << "x-max: [" << xrange[1] << "]" << endl;
         cout << "Y-Range: \n" << "y-min: [" << yrange[0] << "] " << "y-max: [" << yrange[1] << "]" << endl;
 
-        OSMVertex myVertex = vertices[11];
-        OSMVertex::OSMVertexID id = myVertex.getVertexID();
+    OSMVertex myVertex = vertices[11];
+    OSMVertex::OSMVertexID id = myVertex.getVertexID();
+    
+    cout << endl;
+    cout << "======= STUFF Daniel is playing around with =======" << endl << endl;
 
-        // Experimentation, WTF is this adjacencyList structure??
+   
+// Part 2: STREETMAP BUILDING
+        // Find the closest vertex to the center of your map to be used as the source vertex. 
+        // You can get coordinates using OSMVertex.getLatitude() and OSMVertex.getLongitude(). You can color that vertex in the map to see if the calculation is correct.
+    //TODO Uncomment for part 2
+    closestCenterIdx = getCenter(osm_data);
+    graph.getVertex(closestCenterIdx)->setColor("red");
+    // getCenter(osm_data, latc, lonc);
+    // closest = getClosestVertex(graph, latc, lonc);
+  // Getting destination vertex
+    // getQuarter(osm_data, latc, lonc);
+    // dest = getClosestVertex(graph, latc, lonc);
+    // styleRoot(graph, closest);
+    bridges.setDataStructure(&graph);
+    bridges.visualize();
 
-        SLelement<Edge<int, double>>* neighbors = graph.getAdjacencyList(0);    // The neighbors of a key (0)
-        Edge<int, double> key = neighbors->getValue();
-        double edgeData = key.getEdgeData();
+//Part 3: ALGORITHM
+        // Computing distance from a source to all vertices: Shortest Path Algorithm, Djikstra
+        // Identifying path between source and destination :Graph Algorithms, Pointer Chasing
+    //TODO Uncomment for part 3.
+  
+    unordered_map<int, int> parent;
+    shortestPath(graph, closestCenterIdx, parent);
 
-        graph.getAdjacencyList(0)->setColor("");
-        cout << "Edge weight I think: " << edgeData << endl;
-
-
-        // Part 2: STREETMAP BUILDING
-                // Find the closest vertex to the center of your map to be used as the source vertex. 
-                // You can get coordinates using OSMVertex.getLatitude() and OSMVertex.getLongitude(). You can color that vertex in the map to see if the calculation is correct.
-            //TODO Uncomment for part 2
-
-            // getCenter(osm_data, latc, lonc);
-            // closest = getClosestVertex(graph, latc, lonc);
-            // Getting destination vertex
-            // getQuarter(osm_data, latc, lonc);
-            // dest = getClosestVertex(graph, latc, lonc);
-            // styleRoot(graph, closest);
-            // bridges.setDataStructure(&graph);
-            // bridges.visualize();
-
-        //Part 3: ALGORITHM
-                // Computing distance from a source to all vertices: Shortest Path Algorithm, Djikstra
-                // Identifying path between source and destination :Graph Algorithms, Pointer Chasing
-            //TODO Uncomment for part 3.
-
-            // std::unordered_map<int, double> distance;
-            // std::unordered_map<int, int> parent;
-            // shortestPath(graph, closest, distance, parent);
-            // //Styling based on distance
-            // styleDistance(graph, distance);
-            // bridges.visualize();
+    // //Styling based on distance
+    // styleDistance(graph, distance);
+    // bridges.visualize();
 
         //Part 4: OUTPUT
                 // styling based on source-destination path
