@@ -187,7 +187,7 @@ int choiceParsing(istringstream& input)
     string buff;
     input >> buff;
     regex optnDig("[0-9]\.?"); //matches a digit from 1-9 and then a possible . after
-    regex optnCity("[[:alpha:]]+,?\s?([[:alpha:]]+)?");
+    regex optnCity("[a-zA-Z]+,?\s?([a-zA-Z]+)?");
     regex miami("/miami,?\s?(florida)?/i");
     regex dallas("/dallas,?\s?(texas)?/i");
     regex chicago("/chicago,?\s?(illinois)?/i");
@@ -225,8 +225,8 @@ void header() //outputs pretty graphic
 //outputs main menu, showing options
 void mainMenu(vector<string>& presets)
 {
-    cout << "Welcome to the OSM Project" << endl;
-    {
+        cout << "Welcome to the OSM Project" << endl;
+
         cout << "Please Choose an Option: \n\n";
         cout << "L a r g e   U. S.   C i t i e s\n";
         int it = 0;
@@ -236,105 +236,84 @@ void mainMenu(vector<string>& presets)
         cout << ++it << '.' << "City Name" << endl;
         cout << ++it << '.' << "Coordinates" << endl;
         cout << '0' << '.' << "Exit Program." << endl;
-    }
 }
 //in progress, converts string "43,54,234,54" into vector of ints
-vector<int> setCoords(string& src)
+vector<double> setCoords(istringstream& src)
 {
-    vector<int> result;
-    //use getline
+    vector<double> result;
+    string x;
+    for(int i = 0; i < 3; ++i)
+    { 
+        getline(src, x, ',');
+        result[i] = stod(x);
+    }
+    getline(src, x);
+    result[3] = stod(x);
+        
+    if (result.at(0) > result.at(2))
+        swap(result[0], result[2]);
+    if (result[1] > result[3])
+        swap(result[1], result[3]);
     return result;
 }
 // outputs info for user input
 void cityMenu(inputType i)
-{
-    
+{   
     cout << "!!!WARNING!!!\n Not all cities in the United States are present in the OSM Database. " << endl;
     cout << "Please refer to http://bridges-data-server-osm.bridgesuncc.org/cities to ensure your intended city is available." << endl;
     cout << "Enter your input in one of the following ways:  ";
     if(i == name)
         cout << "Name:  <city name>, <state>" << endl; 
     else if (i == coords)
-        cout << "Coordinates: <,>" << endl;
-    cout << "Input '0' to return to the Main Menu." << endl;
+        cout << "Coordinates: <min latitude, min longitude, max latitude, max longitude>" << endl;
 }
 // manages menu for option 8 and 9. enter data
-bool enterCityData(string& input)
-{   
-    bool choose = true;
-    while (choose == true)
-    {
-        cityMenu(name);
-        input.clear();
-        cin >> input;
-        if (input == "0")
-            return false;
-        else if (isValid(input,name))
-            return true;
-    }
-}
-bool enterCityData(string& input, vector<int> coord) 
+
+
+//checks if entered string is valid. If not, returns false.
+bool isValid(istringstream& input, inputType i)
 {
-    bool choose = true;
-    while (choose == true)
+    if (i == inputType::name)
     {
-        cityMenu(coords);
-        input.clear();
-        cin >> input;
-        if (input == "0")
-            return false;
-        else if (isValid(input, coords))
-        {
-            coord = setCoords(input);
+        regex city_state("^[A-Za-z]+(\s[A-Za-z]+)*\s*,*\s*[A-Za-z]+(\s[A-Za-z]+)*\s*$");
+        if (regex_match(input.str(), city_state))
             return true;
+        else
+        {
+            cout << "! Error ! \n Invalid input. Please try again." << endl;
         }
     }
+    else
+    {
+        regex coordFormat("^([+\-]?[0-9]{1,3}(\.[0-9]{0,2})?)(,\s*([+\-]?[0-9]{1,3}(\.[0-9]{0,2})?)){3}");
+        if (regex_match(input.str(), coordFormat))
+            return true;
+        else
+           cout << "! Error ! \n Invalid input. Please try again." << endl;
+    }
 }
-//checks if entered string is valid. If not, returns false.
-bool isValid(string& input, inputType i)
-{
-
- 
-    /*
-        Invalid city name edge cases:
-            > incorrect formatting
-                e.g. AlbanyNewYork
-            > city does not exist
-                e.g. Atlantis, New York
-            > found in Bridges, but state is not specified
-                ( only an edge case if there is a city with the same name in a different state)
-                    eg Albany, Georgia vs Albany, New York
-        Invalid Coordinates edge cases:
-            > too many coordinates:
-                e.g. 32, 43, 54, 67, 754, 35, 53252, 462
-            >
-    */
-
    //OSMData osm_data = ds.getOSMData(35.28, -80.8, 35.34, -80.7, "tertiary"); //UNCC Campus
     //OSMData osm_data = ds.getOSMData(39.85, -83.14, 40.12, -82.85, "secondary"); //Columbus, OH
     //OSMData osm_data = ds.getOSMData(39.121, -77.055, 39.208, -76.805); //Baltimore, MD
-    return true;
-}
 int main(int argc, char** argv) {
 
     //create the Bridges object, set credentials
     Bridges bridges(0, "DanielT", "1353295928782");
     bridges.setTitle("Graph : OpenStreet Map Example");
     
-    
     /*
     * potential regex for y/n choices in API
     * regex yes("((/y/i)(es)?)+");
     * regex no("((/n/i)(o)?)+");
     */
-    
+
     //Part 1: BRIDGES API AND USER API
 
     int closest;
     double latc, lonc;
     int dest;
 
-    vector<string> presetCities ={ "buffer", "Miami, Florida", "New York City, New York",
+    vector<string> presetCities ={"Miami, Florida", "New York City, New York",
     "Dallas, Texas", "Chicago, Illinois", "Seattle, Washington","New Orleans, Louisiana", "Gainesville, Florida" };
     string input;
     DataSource ds(&bridges);
@@ -350,66 +329,97 @@ int main(int argc, char** argv) {
             istringstream ss(input);
             switch (choiceParsing(ss))
             {
-                case(-1):
-                    break;
-                case(0):{
-                    osm_data = ds.getOSMData(presetCities[0]);
-                    needIn = false;
-                    break;
-                }
-                case(1): {
-                    osm_data = ds.getOSMData(presetCities[1]);
-                    needIn = false;
-                    break;
-                }
-                case(2):{
-                    osm_data = ds.getOSMData(presetCities[2]);
-                    needIn = false;
-                    break;
-                }
-                case(3):{
-                    osm_data = ds.getOSMData(presetCities[3]);
-                    needIn = false;
-                    break;
-                }
-                case(4):{
-                    osm_data = ds.getOSMData(presetCities[4]);
-                    needIn = false;
-                    break;
-                }
-                case(5):{
-                    osm_data = ds.getOSMData(presetCities[5]);
-                    needIn = false;
-                    break;
-                }
-                case(6):{
-                    osm_data = ds.getOSMData(presetCities[6]);
-                    needIn = false;
-                    break;
-                }
-                case(7):{
-                    string city;
-                    if (enterCityData(city) == true){
-                        osm_data = ds.getOSMData(city);
-                        needIn = false;
+            case(-1):
+                break;
+            case(1): {
+                osm_data = ds.getOSMData(presetCities[0]);
+                needIn = false;
+                break;
+            }
+            case(2): {
+                osm_data = ds.getOSMData(presetCities[1]);
+                needIn = false;
+                break;
+            }
+            case(3): {
+                osm_data = ds.getOSMData(presetCities[2]);
+                needIn = false;
+                break;
+            }
+            case(4): {
+                osm_data = ds.getOSMData(presetCities[3]);
+                needIn = false;
+                break;
+            }
+            case(5): {
+                osm_data = ds.getOSMData(presetCities[4]);
+                needIn = false;
+                break;
+            }
+            case(6): {
+                osm_data = ds.getOSMData(presetCities[5]);
+                needIn = false;
+                break;
+            }
+            case(7): {
+                osm_data = ds.getOSMData(presetCities[6]);
+                needIn = false;
+                break;
+            }
+            case(8): {
+                bool choose = true;
+                while (choose == true)
+                {
+                    cityMenu(inputType::name);
+                    input.clear();
+                    cin >> input;
+                    ss.str(input);
+                    if (isValid(ss, inputType::name))
+                    {
+                        try {
+                            osm_data = ds.getOSMData(input);
+                        }
+                        catch (exception) {
+                            cout << "This city does Not Exist in the OSM Database, please try another." << endl;
+                        }
                     }
-                    break;
+                    else
+                        continue;
                 }
-                case(8):{ 
-                    string city;
-                    vector<int> coords;
-                    if (enterCityData(city,coords) == true){
-                        osm_data = ds.getOSMData(coords[0],coords[1],coords[2],coords[3]);
-                        needIn = false;
+                needIn = false;
+                break;
+            }
+            case(9): {
+                string city;
+                vector<double> edges;
+                bool choose = true;
+                while (choose == true)
+                {
+                    cityMenu(inputType::coords);
+                    input.clear();
+                    cin >> input;
+                    ss.str(input);
+                    if (isValid(ss, inputType::coords))
+                    {
+                        edges = setCoords(ss);
+                        try {
+                            osm_data = ds.getOSMData(edges[0],edges[1],edges[2],edges[3]);
+                        }
+                        catch (exception) {
+                            cout << "This city does Not Exist in the OSM Database, please try another." << endl;
+                        }
                     }
-                    break;
+                    else
+                        continue;
                 }
-                case(9):{ //exits program
-                    return 0;
-                }
+                needIn = false;
+                break;
+            }
+            case(0): { //exits program
+                return 0;
+            }
             }
         }
-
         vector<OSMVertex> vertices = osm_data.getVertices();
         vector<OSMEdge> edges = osm_data.getEdges();
 
@@ -436,7 +446,7 @@ int main(int argc, char** argv) {
         // Find the closest vertex to the center of your map to be used as the source vertex. 
         // You can get coordinates using OSMVertex.getLatitude() and OSMVertex.getLongitude(). You can color that vertex in the map to see if the calculation is correct.
     //TODO Uncomment for part 2
-    closestCenterIdx = getCenter(osm_data);
+    int closestCenterIdx = getCenter(osm_data);
     graph.getVertex(closestCenterIdx)->setColor("red");
     // getCenter(osm_data, latc, lonc);
     // closest = getClosestVertex(graph, latc, lonc);
