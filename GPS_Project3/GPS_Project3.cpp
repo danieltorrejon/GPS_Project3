@@ -79,8 +79,6 @@ int getCenter(const OSMData& osm_data) {
 // ======== DIJKSTRA'S SHORTEST PATH IMPLEMENTATION ========= O( (V+E)log(V) ) time
 vector<int> shortestPath(const GraphAdjList<int, OSMVertex, double>& gr, int source, unordered_map<int, int>& parent)
 {   
-
-
     // -- INITIALIZATION -- 
     int N = gr.getVertices()->size();   // Get the amount of vertices in the adjacency list
    
