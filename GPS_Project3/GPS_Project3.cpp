@@ -1,5 +1,4 @@
 // STD Library
-#pragma once
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -7,19 +6,21 @@
 #include <queue>
 #include <iomanip>
 #include <regex>
-// Bridges classes
+// Bridges Repository
 #include "Bridges.h" // This class contains methods to connect and transmit a user's data structure representation to the Bridges server.
 #include "DataSource.h" // This class provides an API to various data sources used in BRIDGES.
 #include "GraphAdjList.h" // This class provides methods to represent adjacency list based graphs.
 #include <data_src/OSMData.h> // Class that holds Open Street Map data, from https://openstreetmap.org
 
+
+//Read through documentation again.!
 using namespace std;
 using namespace bridges;
 
 enum inputType
 {
     coords,
-    name
+    name,
 };
 //function used to return the relative distance between doubles.
 //useful to compare for equality
@@ -186,8 +187,7 @@ void styleDistance(GraphAdjList<int, OSMVertex, double> graph,
 void styleParent(GraphAdjList<int, OSMVertex, double> graph,
     const std::unordered_map<int, double>& distance,
     const std::unordered_map<int, int>& parent,
-    int dest
-) {
+    int dest) {
     //TODO
 
     //set all edges to transparent
@@ -334,7 +334,7 @@ int main(int argc, char** argv) {
     double latc, lonc;
     int dest;
 
-    vector<string> presetCities ={"Miami, Florida", "New York City, New York",
+    vector<string> presetCities = {"Miami, Florida", "New York City, New York",
     "Dallas, Texas", "Chicago, Illinois", "Seattle, Washington","New Orleans, Louisiana", "Gainesville, Florida" };
     string input;
     DataSource ds(&bridges);
@@ -496,31 +496,51 @@ int main(int argc, char** argv) {
     bridges.setDataStructure(&graph);
     bridges.visualize();
 
-    // //Styling based on distance
-    // styleDistance(graph, distance);
-    // bridges.visualize();
+//Part 3: ALGORITHM - Daniel
+    // Computing distance from a source to all vertices: Shortest Path Algorithm, Djikstra  
+    //<int_child>,int_parent>
+   
+    unordered_map<int, int> parent; 
+    //shortestPath(graph, closestCenterIdx, parent);
+    //iterate through parent map, for each index go to parent, access vertex specifically and edge and change color
+//Part 4: Destination - Adrian/Daniel
+    // 1. Take in an input for destination
+    // 2. Validate input, OR output vector contents as options to choose from
+    // 3. Identify path between source and destination :Graph Algorithms, Pointer Chasing
+    //      a. How we do this is entirely dependent on what we get from Part 3, the adjacency list, the map, etc.
+     //adjacency list need not be worked with
+//Part 5: OUTPUT - Adrian
+    /*
+    * //edge.setcolor
+    * //vertex.setcolor
+    * d[v] is a vector of distances
+    * p[v] parent map 
+     Styling based on source-destination path
+     Color the map based on distance from source vertex
 
-        //Part 4: OUTPUT
-                // styling based on source-destination path
-                // Color the map based on distance from source vertex
-            //TODO Uncomment for part 4
-
-        ElementVisualizer* styler;
-        // styleParent(graph, distance, parent, dest);
-        // bridges.visualize();
-        /*
-        needIn = true;
-        while(needIn)
-        cout << "Would you like to find another city? (Y/N)" << endl;
-        string in;
-        cin >> in;
-        if(regex_search(in, yes))
-
-        else if(regex_search(in, no))
-
-        else
-        */
+     styleParent(graph, distance, parent, dest);
+     bridges.visualize();
     
+    BLOCK OFFERED BY PPT GUIDE
+   
+    */  
+    /*
+    > This will be at the end of the program to offer an option to restart the process.
+    > Not super important, can remove if it's troublesome. (Memory Leaks)
+    
+    needIn = true;
+    while(needIn)
+    cout << "Would you like to find another city? (Y/N)" << endl;
+    string in;
+    cin >> in;
+    if(regex_search(in, yes))
+
+    else if(regex_search(in, no))
+
+    else
+    */
+    }
     return 0;
 }
+
 
