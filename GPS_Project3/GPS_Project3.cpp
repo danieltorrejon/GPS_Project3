@@ -1,5 +1,4 @@
 // STD Library
-#pragma once
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -7,19 +6,21 @@
 #include <queue>
 #include <iomanip>
 #include <regex>
-// Bridges classes
+// Bridges Repository
 #include "Bridges.h" // This class contains methods to connect and transmit a user's data structure representation to the Bridges server.
 #include "DataSource.h" // This class provides an API to various data sources used in BRIDGES.
 #include "GraphAdjList.h" // This class provides methods to represent adjacency list based graphs.
 #include <data_src/OSMData.h> // Class that holds Open Street Map data, from https://openstreetmap.org
 
+
+//Read through documentation again.!
 using namespace std;
 using namespace bridges;
 
 enum inputType
 {
     coords,
-    name
+    name,
 };
 //function used to return the relative distance between doubles.
 //useful to compare for equality
@@ -73,14 +74,10 @@ int getCenter(const OSMData& osm_data) {
     }
 
     return index;
-    
-    
-
-
 }
 
 // ======== DIJKSTRA'S SHORTEST PATH IMPLEMENTATION, Part 3 =========
-vector<int> shortestPath(const GraphAdjList<int, OSMVertex, double>& gr,
+/*vector<int> shortestPath(const GraphAdjList<int, OSMVertex, double>& gr,
     int source,
     unordered_map<int, int>& parent)
 {   
@@ -140,7 +137,7 @@ vector<int> shortestPath(const GraphAdjList<int, OSMVertex, double>& gr,
 
     return d;
 }
-
+*/
 //return the vertex the closest to a particular (lat,lon), Part 3
 int getClosestVertex(const GraphAdjList<int, OSMVertex, double>& graph,
     double lat, double lon) {
@@ -165,8 +162,7 @@ void styleDistance(GraphAdjList<int, OSMVertex, double> graph,
 void styleParent(GraphAdjList<int, OSMVertex, double> graph,
     const std::unordered_map<int, double>& distance,
     const std::unordered_map<int, int>& parent,
-    int dest
-) {
+    int dest) {
     //TODO
 
     //set all edges to transparent
@@ -217,12 +213,7 @@ int choiceParsing(istringstream& input)
         return -1;
     }
 }
- // implement maybe, solely for aesthetic purposes
-void header() //outputs pretty graphic
-{
-
-}
-//outputs main menu, showing options
+// outputs main menu, showing options
 void mainMenu(vector<string>& presets)
 {
         cout << "Welcome to the OSM Project" << endl;
@@ -313,7 +304,7 @@ int main(int argc, char** argv) {
     double latc, lonc;
     int dest;
 
-    vector<string> presetCities ={"Miami, Florida", "New York City, New York",
+    vector<string> presetCities = {"Miami, Florida", "New York City, New York",
     "Dallas, Texas", "Chicago, Illinois", "Seattle, Washington","New Orleans, Louisiana", "Gainesville, Florida" };
     string input;
     DataSource ds(&bridges);
@@ -443,53 +434,65 @@ int main(int argc, char** argv) {
 
    
 // Part 2: STREETMAP BUILDING
-        // Find the closest vertex to the center of your map to be used as the source vertex. 
-        // You can get coordinates using OSMVertex.getLatitude() and OSMVertex.getLongitude(). You can color that vertex in the map to see if the calculation is correct.
+    // Find the closest vertex to the center of your map to be used as the source vertex. 
+    // You can get coordinates using OSMVertex.getLatitude() and OSMVertex.getLongitude(). You can color that vertex in the map to see if the calculation is correct.
     //TODO Uncomment for part 2
     int closestCenterIdx = getCenter(osm_data);
     graph.getVertex(closestCenterIdx)->setColor("red");
     // getCenter(osm_data, latc, lonc);
     // closest = getClosestVertex(graph, latc, lonc);
-  // Getting destination vertex
+    // Getting destination vertex
     // getQuarter(osm_data, latc, lonc);
     // dest = getClosestVertex(graph, latc, lonc);
     // styleRoot(graph, closest);
     bridges.setDataStructure(&graph);
     bridges.visualize();
 
-//Part 3: ALGORITHM
-        // Computing distance from a source to all vertices: Shortest Path Algorithm, Djikstra
-        // Identifying path between source and destination :Graph Algorithms, Pointer Chasing
-    //TODO Uncomment for part 3.
-  
-    unordered_map<int, int> parent;
-    shortestPath(graph, closestCenterIdx, parent);
+//Part 3: ALGORITHM - Daniel
+    // Computing distance from a source to all vertices: Shortest Path Algorithm, Djikstra  
+    //<int_child>,int_parent>
+   
+    unordered_map<int, int> parent; 
+    //shortestPath(graph, closestCenterIdx, parent);
+    //iterate through parent map, for each index go to parent, access vertex specifically and edge and change color
+//Part 4: Destination - Adrian/Daniel
+    // 1. Take in an input for destination
+    // 2. Validate input, OR output vector contents as options to choose from
+    // 3. Identify path between source and destination :Graph Algorithms, Pointer Chasing
+    //      a. How we do this is entirely dependent on what we get from Part 3, the adjacency list, the map, etc.
+     //adjacency list need not be worked with
+//Part 5: OUTPUT - Adrian
+    /*
+    * //edge.setcolor
+    * //vertex.setcolor
+    * d[v] is a vector of distances
+    * p[v] parent map 
+     Styling based on source-destination path
+     Color the map based on distance from source vertex
 
-    // //Styling based on distance
-    // styleDistance(graph, distance);
-    // bridges.visualize();
+     styleParent(graph, distance, parent, dest);
+     bridges.visualize();
+    
+    BLOCK OFFERED BY PPT GUIDE
+   
+    */  
+    /*
+    > This will be at the end of the program to offer an option to restart the process.
+    > Not super important, can remove if it's troublesome. (Memory Leaks)
+    
+    needIn = true;
+    while(needIn)
+    cout << "Would you like to find another city? (Y/N)" << endl;
+    string in;
+    cin >> in;
+    if(regex_search(in, yes))
 
-        //Part 4: OUTPUT
-                // styling based on source-destination path
-                // Color the map based on distance from source vertex
-            //TODO Uncomment for part 4
+    else if(regex_search(in, no))
 
-        ElementVisualizer* styler;
-        // styleParent(graph, distance, parent, dest);
-        // bridges.visualize();
-        /*
-        needIn = true;
-        while(needIn)
-        cout << "Would you like to find another city? (Y/N)" << endl;
-        string in;
-        cin >> in;
-        if(regex_search(in, yes))
-
-        else if(regex_search(in, no))
-
-        else
-        */
+    else
+    */
     }
     return 0;
 }
+
 
