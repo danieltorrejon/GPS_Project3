@@ -502,7 +502,6 @@ int main(int argc, char** argv) {
     // Computing distance from a source to all vertices: Shortest Path Algorithm, Djikstra  
     //<int_child>,int_parent>
    
-    unordered_map<int, int> parent; 
     //shortestPath(graph, closestCenterIdx, parent);
     //iterate through parent map, for each index go to parent, access vertex specifically and edge and change color
 //Part 4: Destination - Adrian/Daniel
