@@ -42,7 +42,7 @@ void getQuarter(const OSMData& osm_data, double& lat, double& lon) {
     lon = lonr[0] + (lonr[1] - lonr[0]) / 4.;
 }
 
-//used to get the coordinate of the center of the map, Part 2
+// Find the vertex closest to the center of the map ---- O(n) time
 int getCenter(const OSMData& osm_data) {
     double latr[2];
     double lonr[2];
@@ -50,14 +50,110 @@ int getCenter(const OSMData& osm_data) {
 
     double lat = (latr[0] + latr[1]) / 2.;
     double lon = (lonr[0] + lonr[1]) / 2.;
+
+    // Get all the vertices from the data
     vector<OSMVertex> vertices = osm_data.getVertices();
 
     double latV = 0;
     double lonV = 0;
-    bool found = false;
     int index = -1;
     double min = INT_MAX;
 
+    // Iterate through each vertex and compare distances of each to the center. 
+    // The vertex with the smallest difference between coordinates gets saved as the closest one
+    for (int i = 0; i < vertices.size(); i++)
+    {
+        latV = vertices[i].getLatitude();
+        lonV = vertices[i].getLongitude();
+        double dif = abs(lat - latV) + abs(lon - lonV);
+
+        if (min > dif)
+        {
+            min = dif;
+            index = i;
+        }
+    }
+    return index;   // Gives the index of the vertex (within vertices vector or adjacencyList)
+}
+
+// ======== DIJKSTRA'S SHORTEST PATH IMPLEMENTATION ========= O( (V+E)log(V) ) time
+vector<int> shortestPath(const GraphAdjList<int, OSMVertex, double>& gr, int source, unordered_map<int, int>& parent)
+{   
+
+
+    // -- INITIALIZATION -- 
+    int N = gr.getVertices()->size();   // Get the amount of vertices in the adjacency list
+   
+    // 1) INDEX: Keeps track of the vertex we are evaluating in dijkstras algorithm
+    int index = source;
+
+    // 2) PARENT: Unordered map that is passed into function call. Source vertex does NOT have a parent, initialize as -1
+    parent[source] = -1;        
+
+    // 3) VISITED: A set that keeps track of which vertices we have already visited to not re-visit nodes that already have shortest distance
+    unordered_set<int> visited; 
+    visited.insert(source); // Initialize source vertex as visited
+
+    // 4) DISTANCES: the vector, d, that contains DISTANCES for each vertex. All initialized at infinity. Nodes that cannot be reached remain at INT_MAX after the algorithm completes
+    vector<int> d(N, INT_MAX);
+    d[index] = 0;               
+
+    // 5) MIN HEAP: Keeps track of the minimum DISTANCE and corresponding INDEX. Used to find the next index to visit during dijkstra's algorithm.
+    //              A heap of pairs, where the pair stores <Distance, Index> as <double, int>
+    priority_queue<pair<double, int>, vector<pair<double, int>>, greater<pair<double, int>>> pq;    
+    pq.push(make_pair(0, index));   // Initialize the source vertex
+    
+    // DIJKSTRA'S ALGORITHM
+    while (!pq.empty())
+    {
+        pq.pop();
+
+        // -- FIND NEIGHBORS --
+        const SLelement<Edge<int, double>>* neighborPtr = gr.getAdjacencyList(index);
+
+        while (neighborPtr != nullptr)  //  Iterate through each neighbor
+        {
+            
+            Edge<int, double> edge = neighborPtr->getValue();   // get the edge object from linked list
+            int n = edge.to();                                  // get INDEX of the neighbor
+            double weight = edge.getEdgeData();                 // get the weight of the distance to this neighbor
+            
+            // RELAXATION
+            if (d[n] > d[index] + weight)
+            {
+                d[n] = d[index] + weight;
+                pq.push(make_pair(d[n], n));
+                parent[n] = index;
+            }
+
+            neighborPtr = neighborPtr->getNext();
+        }
+        
+        // The heap cannot "reassign" distance values. Thus there will be "outdated" distance values. Check to see if it was already visited and get rid of it if so.
+        bool alreadyVisited = visited.find(pq.top().second) != visited.end();
+        while (alreadyVisited && !pq.empty())
+        {
+            pq.pop();
+            alreadyVisited = visited.find(pq.top().second) != visited.end();
+        }
+
+        index = pq.top().second;    // REASSIGN index value to NEW lowest distance (that wasn't already visisted)
+        visited.insert(index);      // Insert this index into the set of already visited vertex indices
+    }
+
+    return d;   // Return the vector of DISTANCES
+}
+
+// return the vertex the closest to a particular (lat,lon). CHECK lat and long range before calling function ---- O(n) time
+int getClosestVertex(vector<OSMVertex>& vertices, double lat, double lon)
+{
+    double latV = 0;
+    double lonV = 0;
+    int index = -1;
+    double min = INT_MAX;
+
+    // Iterate through each vertex and compare distances of each to the center. 
+    // The vertex with the smallest difference between coordinates gets saved as the closest one
     for (int i = 0; i < vertices.size(); i++)
     {
         latV = vertices[i].getLatitude();
@@ -71,80 +167,7 @@ int getCenter(const OSMData& osm_data) {
         }
 
     }
-
     return index;
-    
-    
-
-
-}
-
-// ======== DIJKSTRA'S SHORTEST PATH IMPLEMENTATION, Part 3 =========
-vector<int> shortestPath(const GraphAdjList<int, OSMVertex, double>& gr,
-    int source,
-    unordered_map<int, int>& parent)
-{   
-    // 1) Parent unordered_map contains <vertexIdx, vertexIdx of parent>
-    // 2) not sure if im gonna use distances, we'll see. Use vector
-
-    // A heap of pairs, where the pair stores <Distance, Index> as <int, int>
-    int N = gr.getVertices()->size();
-
-    priority_queue<pair<double, int>, vector<pair<double, int>>, greater<pair<double, int>> > pq;    // min heap
-    vector<int> d(N, INT_MAX);
-
-    // -- INITIALIZATION -- 
-    int index = source;
-    parent.insert(source, -1);
-    d[index] = 0;
-    pq.push(make_pair(0, 0));
-
-    while (!pq.empty())
-    {
-        pq.pop();
-
-        // -- FIND NEIGHBORS --
-        const SLelement<Edge<int, double>>* neighborPtr = gr.getAdjacencyList(index);
-
-        while (neighborPtr != nullptr)
-        {
-
-            Edge<int, double> edge = neighborPtr->getValue();
-            int n = edge.to();
-            double weight = edge.getEdgeData();
-
-            if (d[n] > d[index] + weight)
-            {
-                d[n] = d[index] + weight;
-
-                if (parent.find(n) == parent.end())
-                {
-                    pq.push(make_pair(d[n], n));
-                    parent.insert(n, index);
-                }
-
-            }
-           
-            neighborPtr = neighborPtr->getNext();
-        }
-
-
-        bool alreadyVisited = parent.find(pq.top().second) != parent.end();
-        while (alreadyVisited && !pq.empty())
-        {
-            pq.pop();
-            alreadyVisited = parent.find(pq.top().second) != parent.end();
-
-        }
-    }
-
-    return d;
-}
-
-//return the vertex the closest to a particular (lat,lon), Part 3
-int getClosestVertex(const GraphAdjList<int, OSMVertex, double>& graph,
-    double lat, double lon) {
-    return -1;
 }
 
 //style all vertices based on their distance to the root of the shortest path. // Part 4
@@ -259,6 +282,8 @@ void cityMenu(inputType i)
     cout << "Input '0' to return to the Main Menu." << endl;
 }
 // manages menu for option 8 and 9. enter data
+
+
 bool enterCityData(string& input)
 {   
     bool choose = true;
@@ -273,6 +298,7 @@ bool enterCityData(string& input)
             return true;
     }
 }
+
 bool enterCityData(string& input, vector<int> coord) 
 {
     bool choose = true;
@@ -290,6 +316,7 @@ bool enterCityData(string& input, vector<int> coord)
         }
     }
 }
+
 //checks if entered string is valid. If not, returns false.
 bool isValid(string& input, inputType i)
 {
@@ -330,10 +357,7 @@ int main(int argc, char** argv) {
     
     //Part 1: BRIDGES API AND USER API
 
-    int closest;
-    double latc, lonc;
-    int dest;
-
+    
     vector<string> presetCities ={ "buffer", "Miami, Florida", "New York City, New York",
     "Dallas, Texas", "Chicago, Illinois", "Seattle, Washington","New Orleans, Louisiana", "Gainesville, Florida" };
     string input;
@@ -409,11 +433,16 @@ int main(int argc, char** argv) {
                 }
             }
         }
+        
+        
+
+        DataSource ds(&bridges);
+        OSMData osm_data = ds.getOSMData("Charlotte, North Carolina", "secondary");
 
         vector<OSMVertex> vertices = osm_data.getVertices();
         vector<OSMEdge> edges = osm_data.getEdges();
 
-        GraphAdjList<int, OSMVertex, double> graph;
+        GraphAdjList<int, OSMVertex, double> graph; //GET THE ADJACENCY LIST
         osm_data.getGraph(&graph);
         graph.forceLargeVisualization(true);
 
@@ -422,42 +451,48 @@ int main(int argc, char** argv) {
         double yrange[2];
         osm_data.getCartesianCoordsRange(xrange, yrange);
 
-        cout << "X-Range:\n" << "x-min: [" << xrange[0] << "] " << "x-max: [" << xrange[1] << "]" << endl;
-        cout << "Y-Range: \n" << "y-min: [" << yrange[0] << "] " << "y-max: [" << yrange[1] << "]" << endl;
-
-    OSMVertex myVertex = vertices[11];
-    OSMVertex::OSMVertexID id = myVertex.getVertexID();
-    
-    cout << endl;
-    cout << "======= STUFF Daniel is playing around with =======" << endl << endl;
+        cout << "X range: " << xrange[0] << " to " << xrange[1] << endl;
+        cout << "Y range: " << yrange[0] << " to " << yrange[1] << endl;
 
    
 // Part 2: STREETMAP BUILDING
         // Find the closest vertex to the center of your map to be used as the source vertex. 
         // You can get coordinates using OSMVertex.getLatitude() and OSMVertex.getLongitude(). You can color that vertex in the map to see if the calculation is correct.
-    //TODO Uncomment for part 2
 
     int closestCenterIdx;
     int dest;
 
     closestCenterIdx = getCenter(osm_data);
     graph.getVertex(closestCenterIdx)->setColor("red");
-    // getCenter(osm_data, latc, lonc);
-    // closest = getClosestVertex(graph, latc, lonc);
-  // Getting destination vertex
-    // getQuarter(osm_data, latc, lonc);
-    // dest = getClosestVertex(graph, latc, lonc);
-    // styleRoot(graph, closest);
-    bridges.setDataStructure(&graph);
-    bridges.visualize();
 
-//Part 3: ALGORITHM
-        // Computing distance from a source to all vertices: Shortest Path Algorithm, Djikstra
-        // Identifying path between source and destination :Graph Algorithms, Pointer Chasing
-    //TODO Uncomment for part 3.
-  
     unordered_map<int, int> parent;
     shortestPath(graph, closestCenterIdx, parent);
+
+
+
+//Part 3: ALGORITHM
+        
+
+    dest = 4542;    // This is a RANDOM vertex index that I found within the parent unordered_map
+    
+    // Utilize this function to get the vertex for inputted latitude and longitude coordinates. Check ranges first!
+    // dest = getClosestVertex(graph, latc, lonc);
+
+
+    int child = dest;
+    int successor = parent[dest];
+
+    // Here is how I drew the path
+    while (successor != -1)
+    {
+        graph.getVertex(child)->setColor("red");
+        child = successor;
+
+        successor = parent[child];
+    }
+
+    bridges.setDataStructure(&graph);
+    bridges.visualize();
 
     // //Styling based on distance
     // styleDistance(graph, distance);
@@ -483,7 +518,7 @@ int main(int argc, char** argv) {
 
         else
         */
-    }
+    
     return 0;
 }
 
