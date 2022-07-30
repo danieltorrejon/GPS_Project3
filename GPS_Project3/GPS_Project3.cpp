@@ -1,4 +1,4 @@
-// STD Library
+#pragma once
 #include <iostream>
 #include <string>
 #include <unordered_map>
@@ -6,12 +6,28 @@
 #include <queue>
 #include <iomanip>
 #include <regex>
+#include <chrono>
+#include <thread>
+#include <stdlib.h>
+#pragma once// STD Library
 // Bridges Repository
 #include "Bridges.h" // This class contains methods to connect and transmit a user's data structure representation to the Bridges server.
 #include "DataSource.h" // This class provides an API to various data sources used in BRIDGES.
 #include "GraphAdjList.h" // This class provides methods to represent adjacency list based graphs.
 #include <data_src/OSMData.h> // Class that holds Open Street Map data, from https://openstreetmap.org
 
+/*
+    U P D A T E   1:
+    since our function aren't in a class, we can't really break the program into header and body and main, since the linker hates global objects.
+    It will throw an exception when it detects a declaration twice. Since theres no class it's inside, we can't do 
+
+    Class::Function
+    to fix it. 
+
+    Solutions:
+        > Put all our stuff in a Helper kind of class, and then break up the program
+        > Fuck It it stays here
+*/
 
 //Read through documentation again.!
 using namespace std;
@@ -79,29 +95,29 @@ int getCenter(const OSMData& osm_data) {
 
 // ======== DIJKSTRA'S SHORTEST PATH IMPLEMENTATION ========= O( (V+E)log(V) ) time
 vector<int> shortestPath(const GraphAdjList<int, OSMVertex, double>& gr, int source, unordered_map<int, int>& parent)
-{   
+{
     // -- INITIALIZATION -- 
     int N = gr.getVertices()->size();   // Get the amount of vertices in the adjacency list
-   
+
     // 1) INDEX: Keeps track of the vertex we are evaluating in dijkstras algorithm
     int index = source;
 
     // 2) PARENT: Unordered map that is passed into function call. Source vertex does NOT have a parent, initialize as -1
-    parent[source] = -1;        
+    parent[source] = -1;
 
     // 3) VISITED: A set that keeps track of which vertices we have already visited to not re-visit nodes that already have shortest distance
-    unordered_set<int> visited; 
+    unordered_set<int> visited;
     visited.insert(source); // Initialize source vertex as visited
 
     // 4) DISTANCES: the vector, d, that contains DISTANCES for each vertex. All initialized at infinity. Nodes that cannot be reached remain at INT_MAX after the algorithm completes
     vector<int> d(N, INT_MAX);
-    d[index] = 0;               
+    d[index] = 0;
 
     // 5) MIN HEAP: Keeps track of the minimum DISTANCE and corresponding INDEX. Used to find the next index to visit during dijkstra's algorithm.
     //              A heap of pairs, where the pair stores <Distance, Index> as <double, int>
-    priority_queue<pair<double, int>, vector<pair<double, int>>, greater<pair<double, int>>> pq;    
+    priority_queue<pair<double, int>, vector<pair<double, int>>, greater<pair<double, int>>> pq;
     pq.push(make_pair(0, index));   // Initialize the source vertex
-    
+
     // DIJKSTRA'S ALGORITHM
     while (!pq.empty())
     {
@@ -112,11 +128,11 @@ vector<int> shortestPath(const GraphAdjList<int, OSMVertex, double>& gr, int sou
 
         while (neighborPtr != nullptr)  //  Iterate through each neighbor
         {
-            
+
             Edge<int, double> edge = neighborPtr->getValue();   // get the edge object from linked list
             int n = edge.to();                                  // get INDEX of the neighbor
             double weight = edge.getEdgeData();                 // get the weight of the distance to this neighbor
-            
+
             // RELAXATION
             if (d[n] > d[index] + weight)
             {
@@ -127,7 +143,7 @@ vector<int> shortestPath(const GraphAdjList<int, OSMVertex, double>& gr, int sou
 
             neighborPtr = neighborPtr->getNext();
         }
-        
+
         // The heap cannot "reassign" distance values. Thus there will be "outdated" distance values. Check to see if it was already visited and get rid of it if so.
         bool alreadyVisited = visited.find(pq.top().second) != visited.end();
         while (alreadyVisited && !pq.empty())
@@ -203,6 +219,28 @@ void styleRoot(GraphAdjList<int, OSMVertex, double>& graph, int root) {
     //TODO
 }
 
+
+vector<double> setCoords(istringstream& src, int size)
+{
+    vector<double> result(size, 0);
+    string x;
+    for (int i = 0; i < size; ++i)
+    {
+        getline(src, x, ',');
+        result[i] = stod(x);
+    }
+    getline(src, x);
+    result[size - 1] = stod(x);
+
+    if (size == 4)
+    {
+        if (result.at(0) > result.at(2))
+            swap(result[0], result[2]);
+        if (result[1] > result[3])
+            swap(result[1], result[3]);
+    }
+    return result;
+}
 int choiceParsing(istringstream& input)
 {
     string buff;
@@ -218,7 +256,7 @@ int choiceParsing(istringstream& input)
     regex newyork("/new york(city)?,?\s?(new york)/i?");
     vector<regex> options
     { miami, newyork, dallas, chicago, seattle, orleans, gainesville };
-    if(regex_match(buff, optnDig))
+    if (regex_match(buff, optnDig))
     {
         return (buff[0] - '0');
     }
@@ -227,7 +265,7 @@ int choiceParsing(istringstream& input)
         for (int it = 0; it < options.size(); ++it)
         {
             if (regex_match(buff, options[it]))
-                return it + 1; 
+                return it + 1;
         }
         cout << "The city you entered was not one of the available options. . . \n If you wish to choose a city outside of the presets, please choose options <8> or <9>." << endl;
         return -1;
@@ -238,95 +276,96 @@ int choiceParsing(istringstream& input)
         return -1;
     }
 }
- // implement maybe, solely for aesthetic purposes
-void header() //outputs pretty graphic
+// implement maybe, solely for aesthetic purposes,
+void displayHeader() //outputs pretty graphic
 {
 
+}
+
+/*
+    
+    N E E D S   C O O R D   R E G E X before implementation is possible
+
+*/
+void displayDestMenu()
+{
+    cout << "Enter the target latitude and longitude you would like the shortest path to.\n Our algorithm will return the closest street path to said destination." << endl;
+    cout << "[INPUT FORMAT]: < latitude, longitude >" << endl;
 }
 //outputs main menu, showing options
-void mainMenu(vector<string>& presets)
+void displayMainMenu(vector<string>& presets)
 {
-        cout << "Welcome to the OSM Project" << endl;
-
-        cout << "Please Choose an Option: \n\n";
-        cout << "L a r g e   U. S.   C i t i e s\n";
-        int it = 0;
-        for (it; it < presets.size(); ++it)
-            cout << it + 1 << '.' << presets.at(it) << endl;
-        cout << "User Input" << endl;
-        cout << ++it << '.' << "City Name" << endl;
-        cout << ++it << '.' << "Coordinates" << endl;
-        cout << '0' << '.' << "Exit Program." << endl;
+    displayHeader();
+    cout << "Please Choose an Option: \n\n";
+    cout << "L a r g e   U. S.   C i t i e s\n";
+    int it = 0;
+    for (it; it < presets.size(); ++it)
+        cout << it + 1 << '.' << presets.at(it) << endl;
+    cout << "User Input" << endl;
+    cout << ++it << '.' << "City Name" << endl;
+    cout << ++it << '.' << "Coordinates" << endl;
+    cout << '0' << '.' << "Exit Program." << endl;
 }
 //in progress, converts string "43,54,234,54" into vector of ints
-vector<double> setCoords(istringstream& src)
-{
-    vector<double> result;
-    string x;
-    for(int i = 0; i < 3; ++i)
-    { 
-        getline(src, x, ',');
-        result[i] = stod(x);
-    }
-    getline(src, x);
-    result[3] = stod(x);
-        
-    if (result.at(0) > result.at(2))
-        swap(result[0], result[2]);
-    if (result[1] > result[3])
-        swap(result[1], result[3]);
-    return result;
-}
+
 // outputs info for user input
-void cityMenu(inputType i)
-{   
+void displayCityMenu(inputType i)
+{
     cout << "!!!WARNING!!!\n Not all cities in the United States are present in the OSM Database. " << endl;
     cout << "Please refer to http://bridges-data-server-osm.bridgesuncc.org/cities to ensure your intended city is available." << endl;
     cout << "Enter your input in one of the following ways:  ";
-    if(i == name)
-        cout << "Name:  <city name>, <state>" << endl; 
+    if (i == name)
+        cout << "Name:  <city name>, <state>" << endl;
     else if (i == coords)
         cout << "Coordinates: <min latitude, min longitude, max latitude, max longitude>" << endl;
 }
-// manages menu for option 8 and 9. enter data
-
-
 //checks if entered string is valid. If not, returns false.
+/*
+    U P D A T E   2
+        Fuck Regex. Things that work perfectly in regex testing software online do not like C++ in any way shape or form.
+        So, I've remade the name regex so far. Took some work and time but I figured it out. Name section works!
+
+        Coords section is still under work. It's painful. Once I have it ready, 
+        I can modify it easily to then take in lat and long in our dest input. 
+
+        So, Priority Number One for me is Getting the Coords Regex Ready. Then I can move forward.
+
+*/
 bool isValid(istringstream& input, inputType i)
 {
+    //Error 1. Not validating input.
+    string buff = input.str();
     if (i == inputType::name)
     {
-        regex city_state("^[A-Za-z]+(\s[A-Za-z]+)*\s*,*\s*[A-Za-z]+(\s[A-Za-z]+)*\s*$");
-        if (regex_match(input.str(), city_state))
+        //regex city_state("[A-Za-z]+(\s[A-Za-z]+)?\s*,*\s*[A-Za-z]+(\s[A-Za-z]+)?\s*");
+        regex city_state("[a-zA-Z]+(?: [a-zA-Z]+)?, ?[a-zA-Z]+(?: [a-zA-Z]+)?"); 
+        if (regex_match(buff, city_state))
             return true;
         else
         {
-            cout << "! Error ! \n Invalid input. Please try again." << endl;
+            cout << "\n! Error ! \n Invalid input. Please try again." << endl;
+            return false;
         }
     }
     else
     {
-        regex coordFormat("^([+\-]?[0-9]{1,3}(\.[0-9]{0,2})?)(,\s*([+\-]?[0-9]{1,3}(\.[0-9]{0,2})?)){3}");
-        if (regex_match(input.str(), coordFormat))
+        regex coord_format("");
+        if (regex_match(buff, coord_format))
             return true;
         else
-           cout << "! Error ! \n Invalid input. Please try again." << endl;
+        {
+            cout << "! Error ! \n Invalid input. Please try again." << endl;
+            return false;
+        }
     }
 }
-   //OSMData osm_data = ds.getOSMData(35.28, -80.8, 35.34, -80.7, "tertiary"); //UNCC Campus
-    //OSMData osm_data = ds.getOSMData(39.85, -83.14, 40.12, -82.85, "secondary"); //Columbus, OH
-    //OSMData osm_data = ds.getOSMData(39.121, -77.055, 39.208, -76.805); //Baltimore, MD
+
+// manages menu for option 8 and 9. enter data
 int main(int argc, char** argv) {
 
     //create the Bridges object, set credentials
     Bridges bridges(0, "DanielT", "1353295928782");
     bridges.setTitle("Graph : OpenStreet Map Example");
-    
-    /*
-    * potential regex for y/n choices in API
-    * regex yes("((/y/i)(es)?)+");
-    * regex no("((/n/i)(o)?)+");
-    */
 
     //Part 1: BRIDGES API AND USER API
 
@@ -334,7 +373,7 @@ int main(int argc, char** argv) {
     double latc, lonc;
     int dest;
 
-    vector<string> presetCities = {"Miami, Florida", "New York City, New York",
+    vector<string> presetCities = { "Miami, Florida", "New York City, New York",
     "Dallas, Texas", "Chicago, Illinois", "Seattle, Washington","New Orleans, Louisiana", "Gainesville, Florida" };
     string input;
     DataSource ds(&bridges);
@@ -345,7 +384,7 @@ int main(int argc, char** argv) {
         bool needIn = true;
         while (needIn) //main menu loop, exits once a choice is made
         {
-            mainMenu(presetCities);
+            displayMainMenu(presetCities);
             getline(cin, input);
             istringstream ss(input);
             switch (choiceParsing(ss))
@@ -391,21 +430,21 @@ int main(int argc, char** argv) {
                 bool choose = true;
                 while (choose == true)
                 {
-                    cityMenu(inputType::name);
+                    displayCityMenu(inputType::name);
                     input.clear();
-                    cin >> input;
+                    getline(cin, input);
                     ss.str(input);
                     if (isValid(ss, inputType::name))
                     {
                         try {
                             osm_data = ds.getOSMData(input);
                         }
-                        catch (exception) {
+                        catch (rapidjson_exception) {
                             cout << "This city does Not Exist in the OSM Database, please try another." << endl;
+                            continue;
                         }
                     }
-                    else
-                        continue;
+                    choose = false;
                 }
                 needIn = false;
                 break;
@@ -416,22 +455,20 @@ int main(int argc, char** argv) {
                 bool choose = true;
                 while (choose == true)
                 {
-                    cityMenu(inputType::coords);
+                    displayCityMenu(inputType::coords);
                     input.clear();
-                    cin >> input;
+                    getline(cin, input);
                     ss.str(input);
                     if (isValid(ss, inputType::coords))
                     {
-                        edges = setCoords(ss);
+                        edges = setCoords(ss, 4);
                         try {
-                            osm_data = ds.getOSMData(edges[0],edges[1],edges[2],edges[3]);
+                            osm_data = ds.getOSMData(edges[0], edges[1], edges[2], edges[3]);
                         }
                         catch (exception) {
                             cout << "This city does Not Exist in the OSM Database, please try another." << endl;
                         }
                     }
-                    else
-                        continue;
                 }
                 needIn = false;
                 break;
@@ -456,90 +493,117 @@ int main(int argc, char** argv) {
         cout << "X range: " << xrange[0] << " to " << xrange[1] << endl;
         cout << "Y range: " << yrange[0] << " to " << yrange[1] << endl;
 
-   
-// Part 2: STREETMAP BUILDING
-        // Find the closest vertex to the center of your map to be used as the source vertex. 
-        // You can get coordinates using OSMVertex.getLatitude() and OSMVertex.getLongitude(). You can color that vertex in the map to see if the calculation is correct.
 
-    int closestCenterIdx;
-    int dest;
+        // Part 2: STREETMAP BUILDING
+             // Find the closest vertex to the center of your map to be used as the source vertex. 
+             // You can get coordinates using OSMVertex.getLatitude() and OSMVertex.getLongitude(). You can color that vertex in the map to see if the calculation is correct.
 
-    closestCenterIdx = getCenter(osm_data);
-    graph.getVertex(closestCenterIdx)->setColor("red");
+        int closestCenterIdx;
+        int dest;
 
-    unordered_map<int, int> parent;
-    shortestPath(graph, closestCenterIdx, parent);
+        closestCenterIdx = getCenter(osm_data);
+        graph.getVertex(closestCenterIdx)->setColor("red");
+
+        unordered_map<int, int> parent;
+        shortestPath(graph, closestCenterIdx, parent);
+
+        //Part 3: ALGORITHM   
+        string in;
+        displayDestMenu();
+        getline(cin, in);
+        istringstream n = istringstream(in);
+        vector<double> destCoords = setCoords(n, 2);
+        dest = getClosestVertex(vertices, destCoords[0],destCoords[1]);    // This is a RANDOM vertex index that I found within the parent unordered_map
+
+        // Utilize this function to get the vertex for inputted latitude and longitude coordinates. Check ranges first!
+        // dest = getClosestVertex(graph, latc, lonc);
 
 
+        int child = dest;
+        int successor = parent[dest];
 
-//Part 3: ALGORITHM
-        
+        // Here is how I drew the path
+        while (successor != -1)
+        {
+            graph.getVertex(child)->setColor("red");
+            child = successor;
 
-    dest = 4542;    // This is a RANDOM vertex index that I found within the parent unordered_map
-    
-    // Utilize this function to get the vertex for inputted latitude and longitude coordinates. Check ranges first!
-    // dest = getClosestVertex(graph, latc, lonc);
+            successor = parent[child];
+        }
 
+        bridges.setDataStructure(&graph);
+        bridges.visualize();
 
-    int child = dest;
-    int successor = parent[dest];
+        //Part 3: ALGORITHM - Daniel
+            // Computing distance from a source to all vertices: Shortest Path Algorithm, Djikstra  
+            //<int_child>,int_parent>
 
-    // Here is how I drew the path
-    while (successor != -1)
-    {
-        graph.getVertex(child)->setColor("red");
-        child = successor;
+            //shortestPath(graph, closestCenterIdx, parent);
+            //iterate through parent map, for each index go to parent, access vertex specifically and edge and change color
+        //Part 4: Destination - Adrian/Daniel
+            // 1. Take in an input for destination
+            // 2. Validate input, OR output vector contents as options to choose from
+            // 3. Identify path between source and destination :Graph Algorithms, Pointer Chasing
+            //      a. How we do this is entirely dependent on what we get from Part 3, the adjacency list, the map, etc.
+             //adjacency list need not be worked with
+        //Part 5: OUTPUT - Adrian
+            /*
+            * //edge.setcolor
+            * //vertex.setcolor
+            * d[v] is a vector of distances
+            * p[v] parent map
+             Styling based on source-destination path
+             Color the map based on distance from source vertex
 
-        successor = parent[child];
-    }
+             styleParent(graph, distance, parent, dest);
+             bridges.visualize();
 
-    bridges.setDataStructure(&graph);
-    bridges.visualize();
+            BLOCK OFFERED BY PPT GUIDE
 
-//Part 3: ALGORITHM - Daniel
-    // Computing distance from a source to all vertices: Shortest Path Algorithm, Djikstra  
-    //<int_child>,int_parent>
-   
-    //shortestPath(graph, closestCenterIdx, parent);
-    //iterate through parent map, for each index go to parent, access vertex specifically and edge and change color
-//Part 4: Destination - Adrian/Daniel
-    // 1. Take in an input for destination
-    // 2. Validate input, OR output vector contents as options to choose from
-    // 3. Identify path between source and destination :Graph Algorithms, Pointer Chasing
-    //      a. How we do this is entirely dependent on what we get from Part 3, the adjacency list, the map, etc.
-     //adjacency list need not be worked with
-//Part 5: OUTPUT - Adrian
-    /*
-    * //edge.setcolor
-    * //vertex.setcolor
-    * d[v] is a vector of distances
-    * p[v] parent map 
-     Styling based on source-destination path
-     Color the map based on distance from source vertex
+            */
 
-     styleParent(graph, distance, parent, dest);
-     bridges.visualize();
-    
-    BLOCK OFFERED BY PPT GUIDE
-   
-    */  
-    /*
-    > This will be at the end of the program to offer an option to restart the process.
-    > Not super important, can remove if it's troublesome. (Memory Leaks)
-    
-    needIn = true;
-    while(needIn)
-    cout << "Would you like to find another city? (Y/N)" << endl;
-    string in;
-    cin >> in;
-    if(regex_search(in, yes))
-
-    else if(regex_search(in, no))
-
-    else
-    */
+            /*
+            > This will be at the end of the program to offer an option to restart the process.
+            > Not super important, can remove if it's troublesome. (Memory Leaks)
+            */
+        needIn = true;
+        while (needIn) {
+            cout << "Would you like to find another city? (Y/N)" << endl;
+            string in;
+            getline(cin, in);
+            for (auto& x : in)
+                x = toupper(x);
+            if (in == "YES" || in == "Y")
+            {
+                needIn = false;
+                system("CLS");
+            }
+            else if (in == "NO" || in == "N")
+            {
+                needIn = false;
+                running = false;
+            }
+            else if (in == "(Y/N)"||in == "YN"||in == "Y/N")
+            {
+                cout << "\n" << endl;
+                for (int i = 0; i < 3; i++)
+                {
+                    this_thread::sleep_for(chrono::nanoseconds(999999999));
+                    cout << ".";
+                }
+                cout << "\n";
+                string bruh = "very funny.";
+                this_thread::sleep_for(chrono::seconds(1));
+                for (auto c : bruh)
+                {
+                    this_thread::sleep_for(chrono::nanoseconds(333333333));
+                    cout << c;
+                }
+                cout << endl;
+            }
+            else
+                cout << "invalid input! Please try again." << endl;
+        }        
     }
     return 0;
 }
-
-
