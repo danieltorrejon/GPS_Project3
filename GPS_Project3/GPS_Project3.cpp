@@ -296,11 +296,12 @@ void Title(Bridges& proj, string& title)
 }
 void displayDestMenu()
 {
+    cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
+    cout << "\nP l e a s e   E n t e r   A   D e s t i n a t i o n: \n" << endl;
+    cout << "Input TWO values from [0, 100]:" << endl;
+    cout << "Example:\nEnter Input Here:    56, 64.43\n" << endl; 
     cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n" << endl;
-    cout << "D e s t i n a t i o n   I n p u t\n" << endl;
-    cout << "Enter the target latitude and longitude you would like the shortest path to.\n Our algorithm will return the closest street path to said destination." << endl;
-    cout << "\n[INPUT FORMAT]: < latitude, longitude >" << endl;
-    cout << "   Please stay within map bounds:" << endl;
+    cout << "Enter Input Here:   ";
 }
 //outputs main menu, showing options
 void displayMainMenu(vector<string>& presets)
@@ -321,13 +322,15 @@ void displayMainMenu(vector<string>& presets)
 //in progress, converts string "43,54,234,54" into vector of ints
 
 // outputs info for user input
-void displayCityMenu(inputType i)
-{
-    cout << "!!!WARNING!!!\n Not all cities in the United States are present in the OSM Database. " << endl;
-    cout << "Please refer to http://bridges-data-server-osm.bridgesuncc.org/cities to ensure your intended city is available." << endl;
-    cout << "Enter your input in one of the following ways:  ";
-    if (i == name)
-        cout << "Name:  <city name>, <state>" << endl;
+void displayCityMenu()
+{   cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n" << endl;
+    cout << "P l e a s e   E n t e r   A   C i t y: \n";
+    cout << "\n! ! ! WARNING ! ! ! \n! Not all cities in the United States are present in the OSM Database ! " << endl;
+    cout << "\nPlease refer to http://bridges-data-server-osm.bridgesuncc.org/cities to ensure your intended city is available." << endl;
+    cout << "\nInput a city and its state." << endl;
+    cout << "\nExample:\nEnter Input Here:    Atlanta, Georgia\n" << endl;
+    cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n" << endl;
+    cout << "Enter Input Here:   ";
 }
 
 //checks if entered string is valid. If not, returns false
@@ -373,8 +376,6 @@ bool isValid(stringstream& input, inputType i)
 int main(int argc, char** argv) {
 
     //create the Bridges object, set credentials
-    setfill('*');
-    
     Bridges bridges(0, "DanielT", "1353295928782");
     string testStr;
 
@@ -467,7 +468,7 @@ int main(int argc, char** argv) {
                 bool choose = true;
                 while (choose == true)
                 {
-                    displayCityMenu(inputType::name);
+                    displayCityMenu();
                     input.clear();
                     getline(cin, input);
                     ss.str(input);
@@ -522,8 +523,6 @@ int main(int argc, char** argv) {
         while (choose == true)
         {
             //outputs incorrect values. due to a fault in getCartesianCoordsRange
-            cout << "Latitude range: " << xrange[0] << " to " << xrange[1] << endl;
-            cout << "Longitude range: " << yrange[0] << " to " << yrange[1] << endl;
             displayDestMenu();
 
             input.clear();
@@ -533,6 +532,7 @@ int main(int argc, char** argv) {
             if (isValid(src, inputType::point))
             {
                 destCoords = setCoords(src, inputType::point);
+                destCoords = convertToLatLong(osm_data, destCoords[0], destCoords[1]);
                 dest = getClosestVertex(vertices, destCoords[0], destCoords[1]);
                 if (destCoords[0] < xrange[0] || destCoords[0] > xrange[1])
                     cout << "\n! ERROR ! Out of X-range! " << endl;
@@ -544,15 +544,17 @@ int main(int argc, char** argv) {
         }     
         /*for (auto k : graph.keySet())
         {
-            graph.getVisualizer(k)->setColor("aliceblue");
+            graph.getVisualizer(k)->setOpacity(50);
         }*/
 
         if (dists[dest] == INT_MAX)
         {
-            cout << "\n! WARNING ! No possible path to source from this vertex!" << endl;
+            cout << "\n! WARNING !\n!No possible path to source from this vertex!" << endl;
             cout << "    The following visualization will have no path." << endl;
         }
-        cout << "\n    Path Distance: " << dists[dest] << endl;
+
+        cout << "\nPath Found! \nPath Distance: [ " << dists[dest] << " ]" << endl;
+        cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
         styleParent(graph, parent, dest);
 
         bridges.setDataStructure(&graph);
