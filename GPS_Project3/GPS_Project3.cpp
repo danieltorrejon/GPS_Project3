@@ -297,7 +297,7 @@ void Title(Bridges& proj, string& title)
 void displayDestMenu()
 {
     cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n" << endl;
-    cout << "D e s t i n a t i o n   I n p u t" << endl;
+    cout << "D e s t i n a t i o n   I n p u t\n" << endl;
     cout << "Enter the target latitude and longitude you would like the shortest path to.\n Our algorithm will return the closest street path to said destination." << endl;
     cout << "\n[INPUT FORMAT]: < latitude, longitude >" << endl;
     cout << "   Please stay within map bounds:" << endl;
