@@ -46,8 +46,8 @@ vector<double> convertToLatLong(const OSMData& osm_data, double x, double y) {
     osm_data.getLatLongRange(latr, lonr);
 
     vector<double> latlon(2);
-    latlon[0] = x / 100.0 * (lonr[1] - lonr[0]) + lonr[0];
-    latlon[1] = y / 100.0 * (latr[1] - latr[0]) + latr[0];
+    latlon[0] = y / 100.0 * (latr[1] - latr[0]) + latr[0];
+    latlon[1] = x / 100.0 * (lonr[1] - lonr[0]) + lonr[0];
     return latlon;
 }
 
