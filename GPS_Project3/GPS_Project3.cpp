@@ -187,8 +187,8 @@ int getClosestVertex(vector<OSMVertex>& vertices, double lat, double lon)
 
 //style all vertices based on their distance to the root of the shortest path. // Part 4
 //style edges based on whether they sit on a shortest path or not
-void styleDistance(GraphAdjList<int, OSMVertex, double> graph,
-    const std::unordered_map<int, double>& distance) {
+void styleDistance(GraphAdjList<int, OSMVertex, double>& graph,
+    const std::unordered_map<int, double>& distance, const std::unordered_map<int, int>& parent) {
     double maxd = 0.;
 
     //find max distance (Beware of unreachable vertices with a distance of INFINITY)
@@ -198,36 +198,41 @@ void styleDistance(GraphAdjList<int, OSMVertex, double> graph,
 
     //optional: style edges if they are shortest path edges. (Beware of back edges)
 }
-
-//style graph based on whether vertices and edges sit on the shortest path between dest and source. (Note that source is not given since all parent pointer chase go there) // Part 4
-void styleParent(GraphAdjList<int, OSMVertex, double> graph,
-    const std::unordered_map<int, double>& distance,
-    const std::unordered_map<int, int>& parent,
-    int dest) {
-    //TODO
-
-    //set all edges to transparent
-
-    //set all vertices to transparent
-
-
-    //for each edge on the SP from source to dest
-}
-
 //change the style of the root of the shortest path
 void styleRoot(GraphAdjList<int, OSMVertex, double>& graph, int root) {
-    //TODO
+    graph.getVertex(root)->setColor("red");
+    graph.getVertex(root)->setSize(50);
+}
+//style graph based on whether vertices and edges sit on the shortest path between dest and source. (Note that source is not given since all parent pointer chase go there) // Part 4
+//const std::unordered_map<int, double>& distance?
+void styleParent(GraphAdjList<int, OSMVertex, double>& graph,
+    const std::unordered_map<int, int>& parent,
+    int dest) {
+    int gradient = 0;
+    int prev = parent.at(dest);
+    int child = dest;
+
+    while (prev != -1)
+    {
+        //gradient += 10;
+        graph.getVertex(child)->setColor("magenta");
+        graph.getEdge(prev, child).setColor("pink");
+        graph.getVertex(child)->setSize(25);
+        child = prev;
+        prev = parent.at(child);
+    }
+    styleRoot(graph, child);
 }
 
 
-vector<double> setCoords(istringstream& src, int size)
+vector<double> setCoords(stringstream& src, int size)
 {
+    string x;
     vector<double> result;
     result.resize(size);
-    string x;
     for (int i = 0; i < result.size(); i++)
     {
-        getline(src, x, ',');
+        getline(src, x, ','); // why does this not work in our coordiantes?
         result[i] = stod(x);
     }
     if (size == 4)
@@ -239,19 +244,19 @@ vector<double> setCoords(istringstream& src, int size)
     }
     return result;
 }
-int choiceParsing(istringstream& input)
+int choiceParsing(stringstream& input)
 {
     string buff;
-    input >> buff;
+    buff = input.str();
     regex optnDig("[0-9]\.?"); //matches a digit from 1-9 and then a possible . after
-    regex optnCity("[a-zA-Z]+,?\s?([a-zA-Z]+)?");
-    regex miami("/miami,?\s?(florida)?/i");
-    regex dallas("/dallas,?\s?(texas)?/i");
-    regex chicago("/chicago,?\s?(illinois)?/i");
-    regex seattle("/seattle,?\s?(washington)?/i");
-    regex orleans("/new\sorleans,?\s?(louisiana)?/i");
-    regex gainesville("/gainesville,?\s?(florida)?/i");
-    regex newyork("/new york(city)?,?\s?(new york)/i?");
+    regex optnCity("[a-zA-Z]+,? *([a-zA-Z]+)?");
+    regex miami("miami,? *(florida)?", regex_constants::icase);
+    regex dallas("dallas,? *(texas)?", regex_constants::icase);
+    regex chicago("chicago,? *(illinois)?", regex_constants::icase);
+    regex seattle("seattle,? *(washington)?", regex_constants::icase);
+    regex orleans("new\sorleans,? *(louisiana)?", regex_constants::icase);
+    regex gainesville("gainesville,? *(florida)?", regex_constants::icase);
+    regex newyork("new york(city)?,? *(new york)?", regex_constants::icase);
     vector<regex> options
     { miami, newyork, dallas, chicago, seattle, orleans, gainesville };
     if (regex_match(buff, optnDig))
@@ -280,11 +285,6 @@ void displayHeader() //outputs pretty graphic
 
 }
 
-/*
-    
-    N E E D S   C O O R D   R E G E X before implementation is possible
-
-*/
 void displayDestMenu()
 {
     cout << "Enter the target latitude and longitude you would like the shortest path to.\n Our algorithm will return the closest street path to said destination." << endl;
@@ -318,19 +318,9 @@ void displayCityMenu(inputType i)
     else if (i == rect)
         cout << "Coordinates: <min latitude, min longitude, max latitude, max longitude>" << endl;
 }
-//checks if entered string is valid. If not, returns false.
-/*
-    U P D A T E   2
-        Fuck Regex. Things that work perfectly in regex testing software online do not like C++ in any way shape or form.
-        So, I've remade the name regex so far. Took some work and time but I figured it out. Name section works!
 
-        Coords section is still under work. It's painful. Once I have it ready, 
-        I can modify it easily to then take in lat and long in our dest input. 
-
-        So, Priority Number One for me is Getting the Coords Regex Ready. Then I can move forward.
-
-*/
-bool isValid(istringstream& input, inputType i)
+//checks if entered string is valid. If not, returns false
+bool isValid(stringstream& input, inputType i)
 {
     //Error 1. Not validating input.
     string buff = input.str();
@@ -348,7 +338,7 @@ bool isValid(istringstream& input, inputType i)
     }
     else if(i == inputType::rect)
     {
-        regex coord("^[+-]?[0-9]{1,3}(\.[0-9]*)?, *[+-]?[0-9]{1,3}(\.[0-9]*)?, *[+-]?[0-9]{1,3}(\.[0-9]*)?, *[+-]?[1-9]{1,3}(\.[0-9]*)?$");
+        regex coord("^[+-]?[0-9]{1,4}(\.[0-9]*)?, *[+-]?[0-9]{1,4}(\.[0-9]*)?, *[+-]?[0-9]{1,4}(\.[0-9]*)?, *[+-]?[1-9]{1,4}(\.[0-9]*)?$");
         if (regex_match(buff, coord))
             return true;
         else
@@ -359,7 +349,7 @@ bool isValid(istringstream& input, inputType i)
     }
     else if(i == inputType::point)
     {
-        regex coord("^[+-]?[0-9]{1,3}(\.[0-9]*)?, *[+-]?[0-9]{1,3}(\.[0-9]*)?$");
+        regex coord("^[+-]?[0-9]{1,4}(\.[0-9]*)?, *[+-]?[0-9]{1,4}(\.[0-9]*)?$");
         if (regex_match(buff, coord))
             return true;
         else
@@ -370,7 +360,6 @@ bool isValid(istringstream& input, inputType i)
     }
 }
 
-// manages menu for option 8 and 9. enter data
 int main(int argc, char** argv) {
 
     //create the Bridges object, set credentials
@@ -388,8 +377,8 @@ int main(int argc, char** argv) {
         if (regex_match(testStr, test))
         {
             cout << "Works !!!!";
-            istringstream t(testStr);
-            vector<double> testResults = setCoords(t, 4);
+            stringstream t(testStr);
+            vector<double> testResults = setCoords(t, 2);
             for (auto dubs : testResults)
                 cout << " " << dubs << " ";
         }
@@ -400,10 +389,10 @@ int main(int argc, char** argv) {
     double latc, lonc;
     int dest;
 
-    vector<string> presetCities = { "Miami, Florida", "New York City, New York",
+    vector<string> presetCities = { "Miami, Florida", "New York, New York",
     "Dallas, Texas", "Chicago, Illinois", "Seattle, Washington","New Orleans, Louisiana", "Gainesville, Florida" };
     string input;
-    istringstream ss;
+    stringstream ss;
     DataSource ds(&bridges);
     OSMData osm_data;
     bool running = true;
@@ -413,6 +402,8 @@ int main(int argc, char** argv) {
         while (needIn) //main menu loop, exits once a choice is made
         {
             displayMainMenu(presetCities);
+            input.clear();
+            ss.clear();
             getline(cin, input);
             ss.str(input);
             switch (choiceParsing(ss))
@@ -487,7 +478,7 @@ int main(int argc, char** argv) {
                     displayCityMenu(inputType::rect);
                     input.clear();
                     getline(cin, input);
-                    istringstream s(input);
+                    stringstream s(input);
                     if (isValid(s, inputType::rect))
                     {
                         edges = setCoords(s, 4);
@@ -512,7 +503,7 @@ int main(int argc, char** argv) {
         vector<OSMVertex> vertices = osm_data.getVertices();
         vector<OSMEdge> edges = osm_data.getEdges();
 
-        GraphAdjList<int, OSMVertex, double> graph; //GET THE ADJACENCY LIST
+        GraphAdjList<int, OSMVertex, double> graph;
         osm_data.getGraph(&graph);
         graph.forceLargeVisualization(true);
 
@@ -522,55 +513,53 @@ int main(int argc, char** argv) {
 
         int closestCenterIdx;
         int dest;
-        double xrange[2];
-        double yrange[2];
+        double xrange[2] {0, 0};
+        double yrange[2] {0, 0};
+        //this function is not working
         osm_data.getCartesianCoordsRange(xrange, yrange);
         //Part 3: ALGORITHM 
         closestCenterIdx = getCenter(osm_data);
         graph.getVertex(closestCenterIdx)->setColor("red");
 
         unordered_map<int, int> parent;
-        shortestPath(graph, closestCenterIdx, parent);
-        vector<double> destCoords;
+        vector<int> dists = shortestPath(graph, closestCenterIdx, parent);
+        vector<double> destCoords{2,0};
          
         bool choose = true;
         while (choose == true)
         {
             displayDestMenu();
+            //outputs incorrect values. due to a fault in getCartesianCoordsRange
             cout << "X range: " << xrange[0] << " to " << xrange[1] << endl;
             cout << "Y range: " << yrange[0] << " to " << yrange[1] << endl;
 
             input.clear();
             getline(cin, input);
-            ss.str(input);
-            vector<double> coords(2, 0);
-            if (isValid(ss, inputType::point))
+            stringstream src(input);
+
+            if (isValid(src, inputType::point))
             {
-                destCoords = setCoords(ss, 2);
-                if (destCoords[0] < xrange[0] || destCoords[0] > xrange[1])
+                destCoords = setCoords(src, 2);
+               /* if (destCoords[0] < xrange[0] || destCoords[0] > xrange[1])
                     cout << "! ERROR ! Out of X-range! " << endl;
                 if (destCoords[1] < yrange[0] || destCoords[1] > yrange[1])
                     cout << " ! ERROR ! Out of Y-range! " << endl;
                 else
-                    choose = false;
+                    choose = false;*/
+                choose = false;
             }
         }
         
         // Utilize this function to get the vertex for inputted latitude and longitude coordinates. Check ranges first!
         dest = getClosestVertex(vertices, destCoords[0], destCoords[1]);
-
-        int child = dest;
-        int successor = parent[dest];
-
         // Here is how I drew the path
-        while (successor != -1)
+       
+       /* for (auto k : graph.keySet())
         {
-            graph.getVertex(child)->setColor("red");
-            child = successor;
-
-            successor = parent[child];
-        }
-
+            graph.getVisualizer(k)->setColor("aliceblue");
+      
+        }*/
+        styleParent(graph, parent, dest);
         bridges.setDataStructure(&graph);
         bridges.visualize();
 

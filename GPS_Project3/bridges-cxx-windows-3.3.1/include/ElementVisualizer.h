@@ -35,7 +35,7 @@ namespace bridges {
 				 * @return the default color
 				 */
 				static const Color DEFAULT_COLOR() {
-					return Color("steelblue");
+					return Color("black");
 				}
 				/*
 				 * @brief specifies the default shape (CIRCLE)
