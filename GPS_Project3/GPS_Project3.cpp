@@ -38,15 +38,17 @@ enum inputType
     point,
     name
 };
-//function used to return the relative distance between doubles.
-//useful to compare for equality
-double RelDif(double a, double b) {
-    double c = std::abs(a);
-    double d = std::abs(b);
 
-    d = (std::max)(c, d);
+// Convert x and y values (0 - 100) that will translate to latitude and longitude to be used
+vector<double> convertToLatLong(const OSMData& osm_data, double x, double y) {
+    double latr[2];
+    double lonr[2];
+    osm_data.getLatLongRange(latr, lonr);
 
-    return d == 0.0 ? 0.0 : std::abs(a - b) / d;
+    vector<double> latlon(2);
+    latlon[0] = x / 100.0 * (lonr[1] - lonr[0]) + lonr[0];
+    latlon[1] = y / 100.0 * (latr[1] - latr[0]) + latr[0];
+    return latlon;
 }
 
 //used to get the coordinate of the (.25,.25) of the map, Part 2
