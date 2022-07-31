@@ -201,7 +201,6 @@ void styleDistance(GraphAdjList<int, OSMVertex, double>& graph,
 //change the style of the root of the shortest path
 void styleRoot(GraphAdjList<int, OSMVertex, double>& graph, int root) {
     graph.getVertex(root)->setColor("red");
-    graph.getVertex(root)->setSize(50);
 }
 //style graph based on whether vertices and edges sit on the shortest path between dest and source. (Note that source is not given since all parent pointer chase go there) // Part 4
 //const std::unordered_map<int, double>& distance?
@@ -217,7 +216,6 @@ void styleParent(GraphAdjList<int, OSMVertex, double>& graph,
         //gradient += 10;
         graph.getVertex(child)->setColor("magenta");
         graph.getEdge(prev, child).setColor("pink");
-        graph.getVertex(child)->setSize(25);
         child = prev;
         prev = parent.at(child);
     }
