@@ -187,7 +187,7 @@ int getClosestVertex(vector<OSMVertex>& vertices, double lat, double lon)
     return index;
 }
 void styleRoot(GraphAdjList<int, OSMVertex, double>& graph, int root) {
-    graph.getVertex(root)->setColor("yellow");
+    graph.getVertex(root)->setColor("red");
 }
 void styleDest(GraphAdjList<int, OSMVertex, double>& graph, int root) {
     graph.getVertex(root)->setColor("purple");
