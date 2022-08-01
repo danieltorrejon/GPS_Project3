@@ -380,9 +380,7 @@ bool isValid(stringstream& input, inputType i)
 int main(int argc, char** argv) {
 
     //create the Bridges object, set credentials
-    Bridges bridges(0, "DanielT", "1353295928782");
     string testStr;
-
     //Part 1: BRIDGES API AND USER API
    /* while (testStr != "exit") {
         //regex test("^[+-]?[1-9]{1,3}(\.[0-9]*)?, *[+-]?[1-9]{1,3}(\.[0-9]*)?, *[+-]?[1-9]{1,3}(\.[0-9]*)?, *[+-]?[1-9]{1,3}(\.[0-9]*)?$");
@@ -412,6 +410,7 @@ int main(int argc, char** argv) {
     bool running = true;
     while (running) // allows program to calculate more than once, needs implementation of continue option at end of progrma
     {
+        Bridges bridges(0, "DanielT", "1353295928782");
         DataSource ds(&bridges);
         OSMData osm_data;
         bool needIn = true;
