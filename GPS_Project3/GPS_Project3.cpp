@@ -302,7 +302,7 @@ void displayDestMenu()
 {
     cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
     cout << "\nP l e a s e   E n t e r   A   D e s t i n a t i o n: \n" << endl;
-    cout << "Input TWO values from [0, 100]:" << endl;
+    cout << "Input TWO values from [0, 100], correspoding to target x and y coordinates on the map:" << endl;
     cout << "Example:\nEnter Input Here:    56, 64.43\n" << endl; 
     cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n" << endl;
     cout << "Enter Input Here:   ";
@@ -318,8 +318,8 @@ void displayMainMenu(vector<string>& presets)
         cout << it + 1 << '.' << " " << presets.at(it) << endl<<endl;
 
     }
-    cout << ++it << '.' << "City Name" << endl<<endl;
-    cout << '9' << '.' << "Exit Program.\n" << endl;
+    cout << ++it << '.' << " City Name" << endl<<endl;
+    cout << '9' << '.' << " Exit Program.\n" << endl;
     cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n" << endl;
     cout << "Enter Input Here:   ";
 }
