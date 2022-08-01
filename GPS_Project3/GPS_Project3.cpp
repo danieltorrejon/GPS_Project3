@@ -595,7 +595,7 @@ int main(int argc, char** argv) {
                 this_thread::sleep_for(chrono::seconds(1));
                 for (auto c : bruh)
                 {
-                    this_thread::sleep_for(chrono::nanoseconds(333333333));
+                    this_thread::sleep_for(chrono::nanoseconds(100000000));
                     cout << c;
                 }
                 cout << endl;
