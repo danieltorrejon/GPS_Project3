@@ -186,21 +186,26 @@ int getClosestVertex(vector<OSMVertex>& vertices, double lat, double lon)
     }
     return index;
 }
-
-//change the style of the root of the shortest path
 void styleRoot(GraphAdjList<int, OSMVertex, double>& graph, int root) {
-    graph.getVertex(root)->setColor("red");
+    graph.getVertex(root)->setColor("yellow");
 }
 void styleDest(GraphAdjList<int, OSMVertex, double>& graph, int root) {
-    graph.getVertex(root)->setColor("blue");
+    graph.getVertex(root)->setColor("purple");
 }
+//change the style of the root of the shortest path
+void styleEnds(GraphAdjList<int, OSMVertex, double>& graph, int root, int dest)
+{
+    styleRoot(graph, root);
+    styleDest(graph, dest);
+}
+
 //style graph based on whether vertices and edges sit on the shortest path between dest and source. (Note that source is not given since all parent pointer chase go there) // Part 4
 //const std::unordered_map<int, double>& distance?
 void styleParent(GraphAdjList<int, OSMVertex, double>& graph,
     const std::unordered_map<int, int>& parent,
     int dest) 
 {
-    int gradient = 0;
+    //int gradient = 0;
     int prev = parent.at(dest);
     int child = dest;
     while (prev != -1)
@@ -211,8 +216,7 @@ void styleParent(GraphAdjList<int, OSMVertex, double>& graph,
         child = prev;
         prev = parent.at(child);
     }
-    styleRoot(graph, child);
-    styleRoot(graph, dest);
+    styleEnds(graph, child, dest);
 }
 
 //"43, 54, 65, 65"
@@ -544,18 +548,20 @@ int main(int argc, char** argv) {
         }     
         /*for (auto k : graph.keySet())
         {
-            graph.getVisualizer(k)->setOpacity(50);
+            graph.getVisualizer(k)->setOpacity(75);
         }*/
 
         if (dists[dest] == INT_MAX)
         {
             cout << "\n! WARNING !\n!No possible path to source from this vertex!" << endl;
             cout << "    The following visualization will have no path." << endl;
+            styleEnds(graph, closestCenterIdx, dest);
         }
-
-        cout << "\nPath Found! \nPath Distance: [ " << dists[dest] << " ]" << endl;
-        cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
-        styleParent(graph, parent, dest);
+        else{
+            cout << "\nPath Found! \nPath Distance: [ " << dists[dest] << " ]" << endl;
+            cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
+            styleParent(graph, parent, dest);
+        }
 
         bridges.setDataStructure(&graph);
         bridges.visualize();
