@@ -17,26 +17,17 @@
 #include "GraphAdjList.h" // This class provides methods to represent adjacency list based graphs.
 #include <data_src/OSMData.h> // Class that holds Open Street Map data, from https://openstreetmap.org
 
-/*
-    U P D A T E   1:
-    since our function aren't in a class, we can't really break the program into header and body and main, since the linker hates global objects.
-    It will throw an exception when it detects a declaration twice. Since theres no class it's inside, we can't do Class::Function
-    to fix it. 
-
-    Solutions:
-        > Put all our stuff in a Helper kind of class, and then break up the program
-        > Fuck It it stays here
-*/
-
 //Read through documentation again.!
 using namespace std;
 using namespace bridges;
 
+//enums used to pass into functions, so that the function can work in different ways. like a pseudo-overload
+
 enum inputType
 {
-    rect,
-    point,
-    name
+    rect, // coordinate rectangle, four vars {x min, y min, x max, y max}
+    point, // coordinate point, two vars {x, y}
+    name // name of location, string
 };
 
 // Convert x and y values (0 - 100) that will translate to latitude and longitude to be used
@@ -49,16 +40,6 @@ vector<double> convertToLatLong(const OSMData& osm_data, double x, double y) {
     latlon[0] = y / 100.0 * (latr[1] - latr[0]) + latr[0];
     latlon[1] = x / 100.0 * (lonr[1] - lonr[0]) + lonr[0];
     return latlon;
-}
-
-//used to get the coordinate of the (.25,.25) of the map, Part 2
-void getQuarter(const OSMData& osm_data, double& lat, double& lon) {
-    double latr[2];
-    double lonr[2];
-    osm_data.getLatLongRange(latr, lonr);
-
-    lat = latr[0] + (latr[1] - latr[0]) / 4.;
-    lon = lonr[0] + (lonr[1] - lonr[0]) / 4.;
 }
 
 // Find the vertex closest to the center of the map ---- O(n) time
@@ -95,7 +76,7 @@ int getCenter(const OSMData& osm_data) {
     return index;   // Gives the index of the vertex (within vertices vector or adjacencyList)
 }
 
-// ======== DIJKSTRA'S SHORTEST PATH IMPLEMENTATION ========= O( (V+E)log(V) ) time
+// ======== DIJKSTRA'S SHORTEST PATH IMPLEMENTATION ========= O( (V + E)log(V) ) time
 vector<int> shortestPath(const GraphAdjList<int, OSMVertex, double>& gr, int source, unordered_map<int, int>& parent)
 {
     // -- INITIALIZATION -- 
@@ -186,31 +167,30 @@ int getClosestVertex(vector<OSMVertex>& vertices, double lat, double lon)
     }
     return index;
 }
+//styles the root vertex red, for easy identification
 void styleRoot(GraphAdjList<int, OSMVertex, double>& graph, int root) {
     graph.getVertex(root)->setColor("red");
 }
+//styles the dest vertex purple, for easy identification
 void styleDest(GraphAdjList<int, OSMVertex, double>& graph, int root) {
     graph.getVertex(root)->setColor("purple");
 }
-//change the style of the root of the shortest path
+//change the style of of the root and dest, combines the prev two for ease of use
 void styleEnds(GraphAdjList<int, OSMVertex, double>& graph, int root, int dest)
 {
     styleRoot(graph, root);
     styleDest(graph, dest);
 }
 
-//style graph based on whether vertices and edges sit on the shortest path between dest and source. (Note that source is not given since all parent pointer chase go there) // Part 4
-//const std::unordered_map<int, double>& distance?
+//style graph based on whether vertices and edges sit on the shortest path between dest and source.
 void styleParent(GraphAdjList<int, OSMVertex, double>& graph,
     const std::unordered_map<int, int>& parent,
     int dest) 
 {
-    //int gradient = 0;
     int prev = parent.at(dest);
     int child = dest;
     while (prev != -1)
     {
-        //gradient += 10;
         graph.getVertex(child)->setColor("magenta");
         graph.getEdge(prev, child).setColor("pink");
         child = prev;
@@ -218,8 +198,7 @@ void styleParent(GraphAdjList<int, OSMVertex, double>& graph,
     }
     styleEnds(graph, child, dest);
 }
-
-//"43, 54, 65, 65"
+// converts a stringstream& src into coords, knowing the # of coords from i
 vector<double> setCoords(stringstream& src, inputType i)
 {
     string x;
@@ -230,10 +209,10 @@ vector<double> setCoords(stringstream& src, inputType i)
         result.resize(2);
     for (int i = 0; i < result.size(); i++)
     {
-        getline(src, x, ','); // why does this not work in our coordiantes?
-        result[i] = stod(x);
+        getline(src, x, ','); //copies one coordinate into string x
+        result[i] = stod(x); //converts one coordinate into a double
     }
-    if (i == rect)
+    if (i == rect) //if min values are greater than max values, swaps them
     {
         if (result.at(0) > result.at(2))
             swap(result[0], result[2]);
@@ -242,6 +221,7 @@ vector<double> setCoords(stringstream& src, inputType i)
     }
     return result;
 }
+// main framework that the preset cities function on for user input. Allows both digit values and names to be input and then returns a value to be used in main.
 int choiceParsing(stringstream& input)
 {
     string buff;
@@ -250,13 +230,15 @@ int choiceParsing(stringstream& input)
     regex optnCity("[a-zA-Z]+,? *([a-zA-Z]+)?");
     regex miami("miami,? *(florida)?", regex_constants::icase);
     regex dallas("dallas,? *(texas)?", regex_constants::icase);
-    regex chicago("chicago,? *(illinois)?", regex_constants::icase);
+    regex la("los angeles,? *(california)?", regex_constants::icase);
     regex seattle("seattle,? *(washington)?", regex_constants::icase);
     regex orleans("new\sorleans,? *(louisiana)?", regex_constants::icase);
     regex gainesville("gainesville,? *(florida)?", regex_constants::icase);
     regex newyork("new york(city)?,? *(new york)?", regex_constants::icase);
+    
     vector<regex> options
-    { miami, newyork, dallas, chicago, seattle, orleans, gainesville };
+    { miami, newyork, dallas, la, seattle, orleans, gainesville };
+
     if (regex_match(buff, optnDig))
     {
         return (buff[0] - '0');
@@ -277,8 +259,8 @@ int choiceParsing(stringstream& input)
         return -1;
     }
 }
-// implement maybe, solely for aesthetic purposes,
-void displayHeader() //outputs pretty graphic
+//OUTPUT FUNCTIONS, these functions are used to encapsulate output for better clarity in main
+void displayHeader() 
 {
     for (int i = 0; i < 33; i++)
         cout << " *";
@@ -293,11 +275,13 @@ void displayHeader() //outputs pretty graphic
     for (int i = 0; i < 33; i++)
         cout << " *";
 }
+//sets project title in Bridges dependent on city name
 void Title(Bridges& proj, string& title)
 {
     string fullTitle = "Pollo Graph of: " + title;
     proj.setTitle(fullTitle);
 }
+// used to informm user on how to enter destination coordinates
 void displayDestMenu()
 {
     cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *" << endl;
@@ -307,7 +291,7 @@ void displayDestMenu()
     cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n" << endl;
     cout << "Enter Input Here:   ";
 }
-//outputs main menu, showing options
+//displays all options, including presets, exiting the program, and custom city
 void displayMainMenu(vector<string>& presets)
 {
     displayHeader();
@@ -323,9 +307,8 @@ void displayMainMenu(vector<string>& presets)
     cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n" << endl;
     cout << "Enter Input Here:   ";
 }
-//in progress, converts string "43,54,234,54" into vector of ints
 
-// outputs info for user input
+// used to inform user on how to enter info for a city name
 void displayCityMenu()
 {   cout << " * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *\n" << endl;
     cout << "P l e a s e   E n t e r   A   C i t y: \n";
@@ -377,34 +360,20 @@ bool isValid(stringstream& input, inputType i)
         }
     }
 }
+
 int main(int argc, char** argv) {
 
-    //create the Bridges object, set credentials
     string testStr;
     //Part 1: BRIDGES API AND USER API
-   /* while (testStr != "exit") {
-        //regex test("^[+-]?[1-9]{1,3}(\.[0-9]*)?, *[+-]?[1-9]{1,3}(\.[0-9]*)?, *[+-]?[1-9]{1,3}(\.[0-9]*)?, *[+-]?[1-9]{1,3}(\.[0-9]*)?$");
-        regex test("^[+-]?[0-9]{1,4}(\.[0-9]*)?, *[+-]?[0-9]{1,4}(\.[0-9]*)?, *[+-]?[0-9]{1,4}(\.[0-9]*)?, *[+-]?[1-9]{1,4}(\.[0-9]*)?$");
-        cout << "Testing time!" << endl;
-        getline(cin, testStr);
-        if (regex_match(testStr, test))
-        {
-            cout << "Works !!!!";
-            stringstream t(testStr);
-            vector<double> testResults = setCoords(t, inputType::point);
-            for (auto dubs : testResults)
-                cout << " " << dubs << " ";
-        }
-        else
-            cout << "Nope.";
-    }*/
 
     int closest;
     double latc, lonc;
     int dest;
-
-    vector<string> presetCities = { "Miami, Florida", "New York, New York",
-    "Dallas, Texas", "Chicago, Illinois", "Seattle, Washington","New Orleans, Louisiana", "Gainesville, Florida" };
+    //this vector will be used to pass in strings into Bridges for the preset cities
+    vector<string> presetCities = 
+    {"Miami, Florida", "New York, New York", "Dallas, Texas", "Los Angeles, California",
+        "Seattle, Washington","New Orleans, Louisiana", "Gainesville, Florida" };
+   
     string input;
     stringstream ss;
     bool running = true;
@@ -425,7 +394,7 @@ int main(int argc, char** argv) {
             {
             case(-1):
                 break;
-            case(1): {
+            case(1): { // 
                 osm_data = ds.getOSMData(presetCities[0]);
                 Title(bridges, presetCities[0]);
                 needIn = false;
@@ -497,6 +466,7 @@ int main(int argc, char** argv) {
             }
             }
         }
+        //initializes all important bridges objects aside from osm_data
         vector<OSMVertex> vertices = osm_data.getVertices();
         vector<OSMEdge> edges = osm_data.getEdges();
 
@@ -513,7 +483,9 @@ int main(int argc, char** argv) {
         double yrange[2]{ 0, 0 };
         //this function is not working
         osm_data.getLatLongRange(xrange, yrange);
+
         //Part 3: ALGORITHM 
+            //finds the shortest path between center and all possible vertices.
         closestCenterIdx = getCenter(osm_data);
         graph.getVertex(closestCenterIdx)->setColor("red");
 
@@ -522,12 +494,11 @@ int main(int argc, char** argv) {
         vector<double> destCoords{2,0};
         int dest;
          
+        // menu for taking in a coordinate pair for the destination
         bool choose = true;
         while (choose == true)
         {
-            //outputs incorrect values. due to a fault in getCartesianCoordsRange
             displayDestMenu();
-
             input.clear();
             getline(cin, input);
             stringstream src(input);
@@ -545,11 +516,7 @@ int main(int argc, char** argv) {
                     choose = false;
             }
         }     
-        /*for (auto k : graph.keySet())
-        {
-            graph.getVisualizer(k)->setOpacity(75);
-        }*/
-
+        //if destination is not accessible
         if (dists[dest] == INT_MAX)
         {
             cout << "\n! WARNING !\n!No possible path to source from this vertex!" << endl;
